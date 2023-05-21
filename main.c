@@ -13,12 +13,21 @@ typedef struct {
     int queueSize;
 } Producer;
 
+typedef struct {
+    int madeByProducerID;
+    char *articleStr;
+    int articleType;
+} Article;
+
+
 // The array of producers.
 Producer *producers;
+// The array of queues contains the articles from the producers.
+Article ***rawArticles;
 // The number of producers in the system.
 int numProducers;
-// The co-editors bounded queue size.
-int coEditorQueueSize;
+// The co-editors bounded queue size. Initiate to -1.
+int coEditorQueueSize = -1;
 
 
 /**
@@ -28,6 +37,22 @@ int coEditorQueueSize;
 void argCheck(int argc) {
     if (argc != ARGUMENTS_NUM) {
         perror("Invalid argument number\n");
+        exit(ERROR);
+    }
+}
+
+/**
+ * Check if the configuration file contains enough producers and the co-Editor queue size is positive.
+ */
+void ValidateConfigurationFile() {
+    // Validate the number of producers received.
+    if (numProducers <= 0) {
+        perror("Not enough producers\n");
+        exit(ERROR);
+    }
+    // Validate the size of the co-editors queue.
+    if (coEditorQueueSize <= 0) {
+        perror("Not A valid co-Editor queue size\n");
         exit(ERROR);
     }
 }
@@ -43,13 +68,13 @@ FILE *openFile(char *filePath) {
     // If the file is null the opening fail. Print an error message and exit.
     if (file == NULL) {
         printf("Error opening file.\n");
-        exit(-1);
+        exit(ERROR);
     }
     return file;
 }
 
 /**
- * Initiaating the producers array.
+ * Initiating the producers array.
  * @param maxProducers The maximum value of the array to initiate.
  */
 void initiateProducers(int maxProducers) {
@@ -58,7 +83,7 @@ void initiateProducers(int maxProducers) {
     // Check if the malloc failed.
     if (producers == NULL) {
         printf("Error in malloc\n");
-        exit(-1);
+        exit(ERROR);
     }
 }
 
@@ -76,7 +101,7 @@ void checkResizeProdArray(int *currentArrayMaxSize) {
         // Check if the allocation succeeded.
         if (producers == NULL) {
             printf("Error in realloc\n");
-            exit(-1);
+            exit(ERROR);
         }
     }
 }
@@ -117,7 +142,7 @@ int readConf(char *confPath) {
     // While there is something to read, read it to the producerId.
     while (fscanf(ConfFile, "%d", &producerId) == 1) {
         // If the line wasn't the last line, read it to the numberOfArticles.
-        if (fscanf(ConfFile, "%d", &numberOfArticles) <= 0)
+        if (fscanf(ConfFile, "%d", &numberOfArticles) <= ERROR)
             // If it was, break and set it to the coEditorQueueSize.
             break;
         // Read the bound for the produce's queue size.
@@ -142,15 +167,31 @@ int readConf(char *confPath) {
 //        printf("Queue size: %d\n\n", producers[i].queueSize);
 //    }
 //    printf("Co-Editor queue size: %d\n", coEditorQueueSize);
+    ValidateConfigurationFile();
     return 1;
 }
 
 
+void createProducers() {
+
+
+}
+
+
+/**
+ *
+ * @param argc
+ * @param argv
+ * @return
+ */
 int main(int argc, char *argv[]) {
     // Validate the number of arguments.
     argCheck(argc);
     // Read the configuration file.
     readConf(argv[1]);
+    // Create the producers threads and set them the data about the queues.
+    createProducers();
+
     // Free the producers array.
     free(producers);
     return 0;
