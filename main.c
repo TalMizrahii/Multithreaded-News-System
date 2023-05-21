@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define ARGUMENTS_NUM 2
 #define ERROR (-1)
@@ -87,6 +88,7 @@ void initiateProducers(int maxProducers) {
     }
 }
 
+
 /**
  * Check if the array needs to be resized.
  * @param currentArrayMaxSize The current array size (might not be full of elements).
@@ -125,6 +127,22 @@ void setValuesToProducers(int currentArrayMaxSize, int producerId, int numberOfA
 }
 
 /**
+ * A data allocation function using malloc.
+ * @param amount The amount of objects to create.
+ * @param sizeOfType The amount of bytes for each element.
+ * @param pointerToAllocatedData The pointer to store the allocated data.
+ */
+void dataAllocation(int amount, int sizeOfType, void **pointerToAllocatedData) {
+    // Allocate data.
+    *pointerToAllocatedData = malloc(amount * sizeOfType);
+    // Check if the malloc failed.
+    if (*pointerToAllocatedData == NULL) {
+        printf("Error in malloc\n");
+        exit(ERROR);
+    }
+}
+
+/**
  * Reading the configuration file into the global variables.
  * creating the producers array and setting the value of numProducers and coEditorQueueSize.
  * @param confPath The path to the configuration file.
@@ -136,7 +154,8 @@ int readConf(char *confPath) {
     // Create an initiated value of the producers amount.
     int maxProducers = INIT_PROD_AMOUNT;
     // Initiate the producers to this amount.
-    initiateProducers(maxProducers);
+    dataAllocation(maxProducers, sizeof(Producer), (void **) &producers);
+//    initiateProducers(maxProducers);
     // Declare a default values to the producer.
     int producerId, numberOfArticles, queueSize;
     // While there is something to read, read it to the producerId.
@@ -160,23 +179,37 @@ int readConf(char *confPath) {
     fclose(ConfFile);
 
     // DELETE from here!!!!
-//    // Printing the read values for verification
-//    for (int i = 0; i < numProducers; i++) {
-//        printf("Producer %d:\n", producers[i].producerId);
-//        printf("Producer value: %d\n", producers[i].numberOfArticles);
-//        printf("Queue size: %d\n\n", producers[i].queueSize);
-//    }
-//    printf("Co-Editor queue size: %d\n", coEditorQueueSize);
+    // Printing the read values for verification
+    for (int i = 0; i < numProducers; i++) {
+        printf("Producer %d:\n", producers[i].producerId);
+        printf("Producer value: %d\n", producers[i].numberOfArticles);
+        printf("Queue size: %d\n\n", producers[i].queueSize);
+    }
+    printf("Co-Editor queue size: %d\n", coEditorQueueSize);
     ValidateConfigurationFile();
     return 1;
 }
 
+/**
+ * Initiating the producers queues.
+ */
+void initProducersQueues() {
+    for (int i = 0; i < numProducers; i++) {
+        dataAllocation(producers[i].queueSize, sizeof(Article *), (void **) &rawArticles[i]);
+    }
+}
 
-void createProducers() {
-
+void producerJob(int id) {
+    int randomNumber = rand() % 3;
 
 }
 
+
+void createProducers() {
+    for (int i = 0; i < numProducers; i++) {
+        producerJob(i + 1);
+    }
+}
 
 /**
  *
@@ -189,9 +222,14 @@ int main(int argc, char *argv[]) {
     argCheck(argc);
     // Read the configuration file.
     readConf(argv[1]);
+    // Initiate the common array of data between the dispatcher and the producers.
+    dataAllocation(numProducers, sizeof(Article *), (void *) &rawArticles); // Need To FREE!!!
+    // Initiate all producers bounded queues.
+    initProducersQueues();
+    // Seed the random number generator with the current time
+    srand(time(NULL));
     // Create the producers threads and set them the data about the queues.
     createProducers();
-
     // Free the producers array.
     free(producers);
     return 0;
