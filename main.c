@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <pthread.h>
 
 #define ARGUMENTS_NUM 2
 #define ERROR (-1)
@@ -249,25 +250,35 @@ void generateArticle(int numberOfArticles, int producerId, Article **producerArt
 }
 
 
-void producerJob(int producerId) {
+void addToQueue(Article ** producerArticles){
+
+}
+
+
+void producerJob(void *arg) {
+    int producerId = *(int *) arg;
     int numberOfArticles = producers[producerId - CORRECTION].numberOfArticles;
     Article **producerArticles;
     dataAllocation(numberOfArticles, sizeof(Article *), (void **) &producerArticles);
     generateArticle(numberOfArticles, producerId, producerArticles);
-
-
-
-    // Print the generated articles
-//    printf("Producer %d Articles:\n", producerId);
-//    printArticles(producerArticles, numberOfArticles, producerId);
+    addToQueue(producerArticles);
 }
 
 
 void createProducers() {
+    pthread_t threads[numProducers];
     for (int i = 0; i < numProducers; i++) {
-        producerJob(i + CORRECTION);
+        int *id = malloc(sizeof(int));
+        *id = i + CORRECTION;
+        pthread_create(&threads[i], NULL, (void *(*)(void *)) producerJob, id);
+    }
+
+    // Wait for all threads to finish
+    for (int i = 0; i < numProducers; i++) {
+        pthread_join(threads[i], NULL);
     }
 }
+
 
 
 /**
