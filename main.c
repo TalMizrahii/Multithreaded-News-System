@@ -201,9 +201,7 @@ void initProducersQueues() {
 
 void producerJob(int id) {
     int randomNumber = rand() % 3;
-
 }
-
 
 void createProducers() {
     for (int i = 0; i < numProducers; i++) {
