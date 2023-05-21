@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #define ARGUMENTS_NUM 2
 #define ERROR (-1)
 #define INIT_PROD_AMOUNT 1
 #define DOUBLE 2
+#define NUM_OF_ARTICLES_TYPE 3
+#define MAX_SIZE_OF_NEWS_STR 20
+#define CORRECTION 1
 
 // Define the producer as an id, the number of articles he has to produce, and the size of his bounded queue size.
 typedef struct {
@@ -15,9 +19,10 @@ typedef struct {
 } Producer;
 
 typedef struct {
+    char articleStr[MAX_SIZE_OF_NEWS_STR];
     int madeByProducerID;
-    char *articleStr;
     int articleType;
+    int lastNumOfArticles;
 } Article;
 
 
@@ -29,6 +34,17 @@ Article ***rawArticles;
 int numProducers;
 // The co-editors bounded queue size. Initiate to -1.
 int coEditorQueueSize = -1;
+
+
+// DELETE!!!!!!!!!!!!!!!!!!1
+void printArticles(Article **producerArticles, int numberOfArticles, int producerID) {
+    for (int i = 0; i < numberOfArticles; i++) {
+        printf("Producer ID: %d, Article Type: %s, Last Number of Articles: %d\n",
+               producerID,
+               producerArticles[i]->articleStr,
+               producerArticles[i]->lastNumOfArticles);
+    }
+}
 
 
 /**
@@ -199,15 +215,60 @@ void initProducersQueues() {
     }
 }
 
-void producerJob(int id) {
-    int randomNumber = rand() % 3;
+/**
+ * Generate all articles for a producer.
+ * @param numberOfArticles The number of articles to produce.
+ * @param producerId The producer id.
+ * @param producerArticles The array to store the new articles.
+ */
+void generateArticle(int numberOfArticles, int producerId, Article **producerArticles) {
+    // An array contains types of news.
+    char *articlesType[NUM_OF_ARTICLES_TYPE] = {"SPORTS", "WEATHER", "NEWS"};
+    // An array to store how many articles of this type where already generated.
+    int articlesCount[NUM_OF_ARTICLES_TYPE] = {1, 1, 1};
+    // Produce all articles.
+    for (int i = 0; i < numberOfArticles; ++i) {
+        // Generate random number modulo 3, what means it can be 0, 1 or 2.
+        int randomNumber = rand() % 3;
+        // Create a new pointer to Article and allocate space for it.
+        Article *article;
+        dataAllocation(1, sizeof(Article), (void *) &article);
+        // Assign the producer id to the article.
+        article->madeByProducerID = producers[producerId - CORRECTION].producerId;
+        // Assign the type (string) of the article.
+        strcpy(article->articleStr, articlesType[randomNumber]);
+        // Assign the article's type (number) to the article.
+        article->articleType = randomNumber;
+        // Assign the number of articles produces so far from this type (not included).
+        article->lastNumOfArticles = articlesCount[randomNumber];
+        // Increase the number of articles produced for this type.
+        articlesCount[randomNumber]++;
+        // Assign the new article to the articles array.
+        producerArticles[i] = article;
+    }
 }
+
+
+void producerJob(int producerId) {
+    int numberOfArticles = producers[producerId - CORRECTION].numberOfArticles;
+    Article **producerArticles;
+    dataAllocation(numberOfArticles, sizeof(Article *), (void **) &producerArticles);
+    generateArticle(numberOfArticles, producerId, producerArticles);
+
+
+
+    // Print the generated articles
+//    printf("Producer %d Articles:\n", producerId);
+//    printArticles(producerArticles, numberOfArticles, producerId);
+}
+
 
 void createProducers() {
     for (int i = 0; i < numProducers; i++) {
-        producerJob(i + 1);
+        producerJob(i + CORRECTION);
     }
 }
+
 
 /**
  *
