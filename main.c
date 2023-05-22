@@ -3,6 +3,7 @@
 #include <time.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #define ARGUMENTS_NUM 2
 #define ERROR (-1)
@@ -12,12 +13,6 @@
 #define MAX_SIZE_OF_NEWS_STR 20
 #define CORRECTION 1
 
-// Define the producer as an id, the number of articles he has to produce, and the size of his bounded queue size.
-typedef struct {
-    int producerId;
-    int numberOfArticles;
-    int queueSize;
-} Producer;
 
 typedef struct {
     char articleStr[MAX_SIZE_OF_NEWS_STR];
@@ -27,25 +22,32 @@ typedef struct {
 } Article;
 
 
+typedef struct {
+    Article **queueArticles;
+    int boundedQueueSize;
+    int insert;
+    int consume;
+    pthread_mutex_t mutex;
+    sem_t empty;
+    sem_t full;
+} BoundedQueue;
+
+
+// Define the producer as an id, the number of articles he has to produce, and the size of his bounded queue size.
+typedef struct {
+    int producerId;
+    int numberOfArticles;
+    int queueSize;
+    BoundedQueue boundedQueue;
+} Producer;
+
+
 // The array of producers.
 Producer *producers;
-// The array of queues contains the articles from the producers.
-Article ***rawArticles;
 // The number of producers in the system.
 int numProducers;
 // The co-editors bounded queue size. Initiate to -1.
 int coEditorQueueSize = -1;
-
-
-// DELETE!!!!!!!!!!!!!!!!!!1
-void printArticles(Article **producerArticles, int numberOfArticles, int producerID) {
-    for (int i = 0; i < numberOfArticles; i++) {
-        printf("Producer ID: %d, Article Type: %s, Last Number of Articles: %d\n",
-               producerID,
-               producerArticles[i]->articleStr,
-               producerArticles[i]->lastNumOfArticles);
-    }
-}
 
 
 /**
@@ -89,20 +91,6 @@ FILE *openFile(char *filePath) {
         exit(ERROR);
     }
     return file;
-}
-
-/**
- * Initiating the producers array.
- * @param maxProducers The maximum value of the array to initiate.
- */
-void initiateProducers(int maxProducers) {
-    // Initiate the array.
-    producers = malloc(maxProducers * sizeof(Producer));
-    // Check if the malloc failed.
-    if (producers == NULL) {
-        printf("Error in malloc\n");
-        exit(ERROR);
-    }
 }
 
 
@@ -207,14 +195,6 @@ int readConf(char *confPath) {
     return 1;
 }
 
-/**
- * Initiating the producers queues.
- */
-void initProducersQueues() {
-    for (int i = 0; i < numProducers; i++) {
-        dataAllocation(producers[i].queueSize, sizeof(Article *), (void **) &rawArticles[i]);
-    }
-}
 
 /**
  * Generate all articles for a producer.
@@ -249,9 +229,65 @@ void generateArticle(int numberOfArticles, int producerId, Article **producerArt
     }
 }
 
+Article* popFromBoundedQueue(BoundedQueue * boundedQueue) {
+    sem_wait(&boundedQueue->full);
+    pthread_mutex_lock(&boundedQueue->mutex);
+    Article *article = boundedQueue->queueArticles[boundedQueue->consume];
+    boundedQueue->consume = (boundedQueue->consume + 1) % boundedQueue->boundedQueueSize;
+    pthread_mutex_unlock(&boundedQueue->mutex);
+    sem_post(&boundedQueue->empty);
+    return article;
+}
 
-void addToQueue(Article ** producerArticles){
 
+void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue){
+    sem_wait(&boundedQueue->empty);
+    pthread_mutex_lock(&boundedQueue->mutex);
+//    boundedQueue->queueArticles[boundedQueue->insert].madeByProducerID = article->madeByProducerID;
+//    boundedQueue->queueArticles[boundedQueue->insert].lastNumOfArticles = article->lastNumOfArticles;
+//    boundedQueue->queueArticles[boundedQueue->insert].articleType = article->articleType;
+//    strcpy(boundedQueue->queueArticles[boundedQueue->insert].articleStr, article->articleStr);
+    boundedQueue->queueArticles[boundedQueue->insert] = article;
+    boundedQueue->insert = (boundedQueue->insert + 1) % boundedQueue->boundedQueueSize;
+    pthread_mutex_unlock(&boundedQueue->mutex);
+    sem_post(&boundedQueue->full);
+    printf("id %d\n",article->madeByProducerID);
+}
+
+
+/**
+ * Initiating the producers bounded queues.
+ */
+void initProducersQueues() {
+    // Go over all producers.
+    for (int i = 0; i < numProducers; i++) {
+        // Allocate data for their articles queues.
+        dataAllocation(producers[i].queueSize, sizeof(Article), (void **) &producers[i].boundedQueue.queueArticles);
+        // Set the queue bound.
+        producers[i].boundedQueue.boundedQueueSize = producers[i].queueSize;
+        // Set the insert index to 0.
+        producers[i].boundedQueue.insert = 0;
+        // Set the "consume" index to 0.
+        producers[i].boundedQueue.consume = 0;
+        // Set the mutex to the bounded queue to 1.
+        pthread_mutex_init(&producers[i].boundedQueue.mutex, NULL);
+        // Set the semaphore empty to the queue size, to initiate it to all spots available.
+        sem_init(&producers[i].boundedQueue.empty, 0, producers[i].queueSize);
+        // Set the semaphore full to the queue size, to initiate it to all spots available.
+        sem_init(&producers[i].boundedQueue.full, 0, 0);
+    }
+}
+
+
+/**
+ * Insert articles from the
+ * @param producerId
+ * @param producerArticles
+ */
+void insertArticles(int producerId, Article **producerArticles){
+    for(int i = 0 ; i < producers[producerId - CORRECTION].numberOfArticles; i++){
+        pushToBoundedQueue(producerArticles[i], &producers[producerId - CORRECTION].boundedQueue);
+    }
 }
 
 
@@ -261,7 +297,7 @@ void producerJob(void *arg) {
     Article **producerArticles;
     dataAllocation(numberOfArticles, sizeof(Article *), (void **) &producerArticles);
     generateArticle(numberOfArticles, producerId, producerArticles);
-    addToQueue(producerArticles);
+    insertArticles(producerId, producerArticles);
 }
 
 
@@ -273,12 +309,12 @@ void createProducers() {
         pthread_create(&threads[i], NULL, (void *(*)(void *)) producerJob, id);
     }
 
-    // Wait for all threads to finish
+    // Wait for all threads to finish DELETE!
     for (int i = 0; i < numProducers; i++) {
         pthread_join(threads[i], NULL);
+        printf("%d finished", i + 1);
     }
 }
-
 
 
 /**
@@ -292,8 +328,6 @@ int main(int argc, char *argv[]) {
     argCheck(argc);
     // Read the configuration file.
     readConf(argv[1]);
-    // Initiate the common array of data between the dispatcher and the producers.
-    dataAllocation(numProducers, sizeof(Article *), (void *) &rawArticles); // Need To FREE!!!
     // Initiate all producers bounded queues.
     initProducersQueues();
     // Seed the random number generator with the current time
