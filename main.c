@@ -12,7 +12,13 @@
 #define ARGUMENTS_NUM 2
 #define ERROR (-1)
 #define DOUBLE 2
+#define CORRECTION 1
+#define NUM_OF_ARTICLES_TYPE 3
 
+typedef struct {
+    Producer *producer;
+    BoundedQueue *boundedQueue;
+} ProducerJobArgs;
 
 /**
  * Validate that the program received the proper amount of arguments.
@@ -87,8 +93,12 @@ void ValidateConfigurationFile(int numProducers, int coEditorQueueSize) {
  * @param confPath The path to the configuration file.
  * @return
  */
-void
-readConf(char *confPath, Producer **producers, int *numOfProducers, int producersArrayMaxSize, int *coEditorQueueSize) {
+void readConf(char *confPath,
+              Producer **producers,
+              int *numOfProducers,
+              int producersArrayMaxSize,
+              int *coEditorQueueSize) {
+
     // Open the configuration file.
     FILE *ConfFile = openFile(confPath);
     // Declare a default values to the producer.
@@ -132,6 +142,62 @@ void createBoundedQueues(Producer **producers, int numOfProducers, BoundedQueue 
 }
 
 
+void *producerJob(void *producerJobArgs) {
+    // Extract the arguments from the struct.
+    ProducerJobArgs *args = (ProducerJobArgs *) producerJobArgs;
+    Producer *producer = args->producer;
+    BoundedQueue *boundedQueue = args->boundedQueue;
+    // An array contains types of news.
+    char *articlesType[NUM_OF_ARTICLES_TYPE] = {"SPORTS", "WEATHER", "NEWS"};
+    // An array to store how many articles of this type where already generated.
+    int articlesCount[NUM_OF_ARTICLES_TYPE] = {0, 0, 0};
+    // Declare a random number for the article.
+    int randomNumber = -1;
+    // Create an article and push it to the bounded queue.
+    for (int i = 0; i < producer->numberOfArticles; i++) {
+        // Generate random number modulo 3, what means it can be 0, 1 or 2.
+        randomNumber = rand() % NUM_OF_ARTICLES_TYPE;
+        // Raise the counter for the relevant type.
+        articlesCount[randomNumber]++;
+        // Create an article.
+        Article *article = createArticle(producer->producerId, articlesType[randomNumber], articlesCount[randomNumber]);
+        // Push it to the queue.
+        pushToBoundedQueue(article, boundedQueue);
+    }
+
+    return NULL;
+}
+
+void createProducers(Producer **producers, int numOfProducers, BoundedQueue **boundedQueues) {
+    // Create an array of threads.
+    pthread_t threads[numOfProducers];
+    // Create an array for the producers arguments.
+    ProducerJobArgs *producerJobArgs[numOfProducers];
+    // Go over all producers.
+    for (int i = 0; i < numOfProducers; i++) {
+        // Create an array for the producers arguments.
+        producerJobArgs[i] = (ProducerJobArgs *) malloc(sizeof(ProducerJobArgs));
+        // Set to it the relevant producer.
+        producerJobArgs[i]->producer = producers[i];
+        // Set to it the bounded buffer.
+        producerJobArgs[i]->boundedQueue = boundedQueues[i];
+        // Create the thread and send it the job function.
+        pthread_create(&threads[i], NULL, producerJob, producerJobArgs[i]);
+    }
+
+    // Wait for all threads to finish
+    for (int i = 0; i < numOfProducers; i++) {
+        pthread_join(threads[i], NULL);
+        printf("%d finished\n", i + 1);
+    }
+
+    // Release all producer args.
+    for (int i = 0; i < numOfProducers; i++) {
+        free(producerJobArgs[i]);
+    }
+}
+
+
 /**
  *
  * @param argc
@@ -166,7 +232,7 @@ int main(int argc, char *argv[]) {
     // Initiate the bounded queue array.
     dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);//todo: Release!
     createBoundedQueues(producers, numOfProducers, boundedQueues);
-
+    createProducers(producers, numOfProducers, boundedQueues);
     // Seed the random number generator with the current time
     srand(time(NULL));
 
