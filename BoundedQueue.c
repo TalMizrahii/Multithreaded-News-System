@@ -35,7 +35,7 @@ BoundedQueue *createBoundedQueue(int queueSize) {
  * @param articlesCount The count for the article (how many made so far).
  * @return A pointer to the article on the heap.
  */
-Article *createArticle(int producerId, char *articlesType, int articleCount) {
+Article *createArticle(int producerId, char *articlesType, int articleCount, int serial) {
     // Create a new article and allocate data for it.
     Article *article;
     dataAllocation(1, sizeof(Article), (void *) &article);
@@ -45,8 +45,11 @@ Article *createArticle(int producerId, char *articlesType, int articleCount) {
     strcpy(article->articleStr, articlesType);
     // Assign the number of articles produces so far from this type (not included).
     article->lastNumOfArticles = articleCount;
+    // Set the serial number of the article.
+    article->serial = serial;
     return article;
 }
+
 
 /**
  * Pushing to a bounded queue an article. Making the push safe for the producer by using semaphores and mutexes.
@@ -66,8 +69,7 @@ void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue) {
     pthread_mutex_unlock(&boundedQueue->mutex);
     // Raise the full counter.
     sem_post(&boundedQueue->full);
-    // DELETE!!
-    printf("id %d, str = %s\n", article->madeByProducerID, article->articleStr);
+
 }
 
 /**

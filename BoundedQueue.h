@@ -13,6 +13,7 @@ typedef struct {
     char articleStr[MAX_SIZE_OF_NEWS_STR];
     int madeByProducerID;
     int lastNumOfArticles;
+    int serial;
 } Article;
 
 
@@ -27,7 +28,8 @@ typedef struct {
 } BoundedQueue;
 
 BoundedQueue *createBoundedQueue(int queueSize);
-Article *createArticle(int producerId, char *articlesType, int articleCount);
+Article *createArticle(int producerId, char *articlesType, int articleCount, int serial);
 void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue);
+Article *popFromBoundedQueue(BoundedQueue *boundedQueue);
 
 #endif //OS_EX3_BOUNDEDQUEUE_H

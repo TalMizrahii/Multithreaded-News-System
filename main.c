@@ -8,12 +8,13 @@
 #include "ControlAndData.h"
 #include "Producer.h"
 #include "BoundedQueue.h"
+#include "Dispatcher.h"
 
 #define ARGUMENTS_NUM 2
 #define ERROR (-1)
 #define DOUBLE 2
-#define CORRECTION 1
 #define NUM_OF_ARTICLES_TYPE 3
+
 
 typedef struct {
     Producer *producer;
@@ -97,7 +98,8 @@ void readConf(char *confPath,
               Producer **producers,
               int *numOfProducers,
               int producersArrayMaxSize,
-              int *coEditorQueueSize) {
+              int *coEditorQueueSize,
+              int *totalArticlesAmount) {
 
     // Open the configuration file.
     FILE *ConfFile = openFile(confPath);
@@ -109,6 +111,8 @@ void readConf(char *confPath,
         if (fscanf(ConfFile, "%d", &numberOfArticles) <= ERROR)
             // If it was, break and set it to the coEditorQueueSize.
             break;
+        // Add the amount of articles to the total amount.
+        *totalArticlesAmount = *totalArticlesAmount + numberOfArticles;
         // Read the bound for the produce's queue size.
         fscanf(ConfFile, "%d", &queueSize);
         // Ignore any extra characters on the line.
@@ -160,7 +164,10 @@ void *producerJob(void *producerJobArgs) {
         // Raise the counter for the relevant type.
         articlesCount[randomNumber]++;
         // Create an article.
-        Article *article = createArticle(producer->producerId, articlesType[randomNumber], articlesCount[randomNumber]);
+        Article *article = createArticle(producer->producerId,
+                                         articlesType[randomNumber],
+                                         articlesCount[randomNumber],
+                                         randomNumber);
         // Push it to the queue.
         pushToBoundedQueue(article, boundedQueue);
     }
@@ -198,9 +205,24 @@ void createProducersJob(Producer **producers, int numOfProducers, BoundedQueue *
     }
 
     // Release all producer args.
-    for (int i = 0; i < numOfProducers; i++) {
-        free(producerJobArgs[i]);
-    }
+//    for (int i = 0; i < numOfProducers; i++) {
+//        free(producerJobArgs[i]);
+//    }
+}
+
+
+/**
+ *
+ * @param dispatcher
+ */
+void createDispatcherJob(Dispatcher *dispatcher) {
+    // Declare a thread.
+    pthread_t thread;
+    // Run the thread with the dispatch function so the dispatcher will process the bounded queues.
+    pthread_create(&thread, NULL, dispatch, (void *) dispatcher);
+//
+    pthread_join(thread, NULL);
+    printf("dispatcher finished.\n");
 }
 
 
@@ -215,14 +237,14 @@ int main(int argc, char *argv[]) {
     argCheck(argc);
     // Seed the random number generator with the current time
     srand(time(NULL));
-    // Set the number of producers to 0.
-    int numOfProducers = 0, producersArrayMaxSize = 10, coEditorQueueSize = -1;
+    // Set parameters about the program.
+    int numOfProducers = 0, producersArrayMaxSize = 10, coEditorQueueSize = -1, totalArticlesAmount = 0;
     // Declare a pointer to the producers array.
     Producer **producers;
     // Allocate data for the producers array.
     dataAllocation(producersArrayMaxSize, sizeof(Producer *), (void **) &producers);//todo: Release!
     // Read the configuration file.
-    readConf(argv[1], producers, &numOfProducers, producersArrayMaxSize, &coEditorQueueSize);
+    readConf(argv[1], producers, &numOfProducers, producersArrayMaxSize, &coEditorQueueSize, &totalArticlesAmount);
 
 
     // DELETE from here!!!!
@@ -240,9 +262,9 @@ int main(int argc, char *argv[]) {
     // Initiate the bounded queue array.
     dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);//todo: Release!
     createBoundedQueues(producers, numOfProducers, boundedQueues);
+    Dispatcher *dispatcher = createNewDispatcher(boundedQueues, coEditorQueueSize, totalArticlesAmount, numOfProducers);
+    createDispatcherJob(dispatcher);
     createProducersJob(producers, numOfProducers, boundedQueues);
-
-
 
     return 0;
 }
