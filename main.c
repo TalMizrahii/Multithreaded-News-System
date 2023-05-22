@@ -168,7 +168,13 @@ void *producerJob(void *producerJobArgs) {
     return NULL;
 }
 
-void createProducers(Producer **producers, int numOfProducers, BoundedQueue **boundedQueues) {
+/**
+ * Creating
+ * @param producers
+ * @param numOfProducers
+ * @param boundedQueues
+ */
+void createProducersJob(Producer **producers, int numOfProducers, BoundedQueue **boundedQueues) {
     // Create an array of threads.
     pthread_t threads[numOfProducers];
     // Create an array for the producers arguments.
@@ -207,6 +213,8 @@ void createProducers(Producer **producers, int numOfProducers, BoundedQueue **bo
 int main(int argc, char *argv[]) {
     // Validate the number of arguments.
     argCheck(argc);
+    // Seed the random number generator with the current time
+    srand(time(NULL));
     // Set the number of producers to 0.
     int numOfProducers = 0, producersArrayMaxSize = 10, coEditorQueueSize = -1;
     // Declare a pointer to the producers array.
@@ -232,9 +240,8 @@ int main(int argc, char *argv[]) {
     // Initiate the bounded queue array.
     dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);//todo: Release!
     createBoundedQueues(producers, numOfProducers, boundedQueues);
-    createProducers(producers, numOfProducers, boundedQueues);
-    // Seed the random number generator with the current time
-    srand(time(NULL));
+    createProducersJob(producers, numOfProducers, boundedQueues);
+
 
 
     return 0;

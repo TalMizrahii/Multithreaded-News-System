@@ -67,7 +67,7 @@ void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue) {
     // Raise the full counter.
     sem_post(&boundedQueue->full);
     // DELETE!!
-    printf("id %d\n", article->madeByProducerID);
+    printf("id %d, str = %s\n", article->madeByProducerID, article->articleStr);
 }
 
 /**
