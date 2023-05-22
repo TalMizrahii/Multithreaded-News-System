@@ -229,7 +229,7 @@ void generateArticle(int numberOfArticles, int producerId, Article **producerArt
     }
 }
 
-Article* popFromBoundedQueue(BoundedQueue * boundedQueue) {
+Article *popFromBoundedQueue(BoundedQueue *boundedQueue) {
     sem_wait(&boundedQueue->full);
     pthread_mutex_lock(&boundedQueue->mutex);
     Article *article = boundedQueue->queueArticles[boundedQueue->consume];
@@ -240,18 +240,14 @@ Article* popFromBoundedQueue(BoundedQueue * boundedQueue) {
 }
 
 
-void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue){
+void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue) {
     sem_wait(&boundedQueue->empty);
     pthread_mutex_lock(&boundedQueue->mutex);
-//    boundedQueue->queueArticles[boundedQueue->insert].madeByProducerID = article->madeByProducerID;
-//    boundedQueue->queueArticles[boundedQueue->insert].lastNumOfArticles = article->lastNumOfArticles;
-//    boundedQueue->queueArticles[boundedQueue->insert].articleType = article->articleType;
-//    strcpy(boundedQueue->queueArticles[boundedQueue->insert].articleStr, article->articleStr);
     boundedQueue->queueArticles[boundedQueue->insert] = article;
     boundedQueue->insert = (boundedQueue->insert + 1) % boundedQueue->boundedQueueSize;
     pthread_mutex_unlock(&boundedQueue->mutex);
     sem_post(&boundedQueue->full);
-    printf("id %d\n",article->madeByProducerID);
+    printf("id %d\n", article->madeByProducerID);
 }
 
 
@@ -278,29 +274,58 @@ void initProducersQueues() {
     }
 }
 
+/**
+ * Create an article using the articlesType for its title,
+ * and the articlesCount to track how many was made from this type.
+ * @param producerId The ID of the producer who made the article.
+ * @param articlesType The types of what the article can be (string).
+ * @param articlesCount The count for the article (how many made so far).
+ * @return A pointer to an article struct on the heap.
+ */
+Article *createArticle(int producerId, char *articlesType[], int articlesCount[]) {
+    // Generate random number modulo 3, what means it can be 0, 1 or 2.
+    int randomNumber = rand() % 3;
+    // Create a new pointer to Article and allocate space for it.
+    Article *article;
+    dataAllocation(1, sizeof(Article), (void *) &article);
+    // Assign the producer id to the article.
+    article->madeByProducerID = producers[producerId - CORRECTION].producerId;
+    // Assign the type (string) of the article.
+    strcpy(article->articleStr, articlesType[randomNumber]);
+    // Assign the article's type (number) to the article.
+    article->articleType = randomNumber;
+    // Assign the number of articles produces so far from this type (not included).
+    article->lastNumOfArticles = articlesCount[randomNumber];
+    // Increase the number of articles produced for this type.
+    articlesCount[randomNumber]++;
+    return article;
+}
 
 /**
- * Insert articles from the
- * @param producerId
- * @param producerArticles
+ * The function to send to the producer's thread to run.
+ * Responsible to create the amount of article mentioned in the configuration file,
+ * and push them in the bounded queue.
+ * @param arg The producer's ID.
  */
-void insertArticles(int producerId, Article **producerArticles){
-    for(int i = 0 ; i < producers[producerId - CORRECTION].numberOfArticles; i++){
-        pushToBoundedQueue(producerArticles[i], &producers[producerId - CORRECTION].boundedQueue);
+void producerJob(void *arg) {
+    // Extract the producer's ID.
+    int producerId = *(int *) arg;
+    // An array contains types of news.
+    char *articlesType[NUM_OF_ARTICLES_TYPE] = {"SPORTS", "WEATHER", "NEWS"};
+    // An array to store how many articles of this type where already generated.
+    int articlesCount[NUM_OF_ARTICLES_TYPE] = {1, 1, 1};
+    // Create an article and push it to the bounded queue.
+    for (int i = 0; i < producers[producerId - CORRECTION].numberOfArticles; i++) {
+        // Create an article.
+        Article *article = createArticle(producerId, articlesType, articlesCount);
+        // Push it to the queue.
+        pushToBoundedQueue(article, &producers[producerId - CORRECTION].boundedQueue);
     }
 }
 
-
-void producerJob(void *arg) {
-    int producerId = *(int *) arg;
-    int numberOfArticles = producers[producerId - CORRECTION].numberOfArticles;
-    Article **producerArticles;
-    dataAllocation(numberOfArticles, sizeof(Article *), (void **) &producerArticles);
-    generateArticle(numberOfArticles, producerId, producerArticles);
-    insertArticles(producerId, producerArticles);
-}
-
-
+/**
+ * Creating all producers and the threads for them.
+ */
 void createProducers() {
     pthread_t threads[numProducers];
     for (int i = 0; i < numProducers; i++) {
@@ -310,10 +335,10 @@ void createProducers() {
     }
 
     // Wait for all threads to finish DELETE!
-    for (int i = 0; i < numProducers; i++) {
-        pthread_join(threads[i], NULL);
-        printf("%d finished", i + 1);
-    }
+//    for (int i = 0; i < numProducers; i++) {
+//        pthread_join(threads[i], NULL);
+//        printf("%d finished", i + 1);
+//    }
 }
 
 
