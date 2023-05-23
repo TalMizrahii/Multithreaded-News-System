@@ -7,18 +7,18 @@
 #include "ControlAndData.h"
 
 #define MAX_SIZE_OF_NEWS_STR 20
+#define INITIATED_QUEUE_VAL 10
 
 typedef struct {
     Article **queueArticles;
     int unboundedQueueSize;
-    int numElements;
     int insert;
     int consume;
     pthread_mutex_t mutex;
     sem_t empty;
 } UnBoundedQueue;
 
-UnBoundedQueue *createUnBoundedQueue(int queueSize);
+UnBoundedQueue *createUnBoundedQueue();
 Article *createArticle(int producerId, char *articlesType, int articleCount, int serial);
 void pushToUnBoundedQueue(Article *article, UnBoundedQueue *unboundedQueue);
 Article *popFromUnBoundedQueue(UnBoundedQueue *unboundedQueue);

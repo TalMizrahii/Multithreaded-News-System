@@ -11,7 +11,6 @@
 #include "Dispatcher.h"
 
 
-
 typedef struct {
     Producer *producer;
     BoundedQueue *boundedQueue;
@@ -219,7 +218,13 @@ void createProducersJob(pthread_t producersThreads[], Producer **producers, int 
 void createDispatcherJob(pthread_t *dispatcherThread, Dispatcher *dispatcher) {
     // Run the thread with the dispatch function so the dispatcher will process the bounded queues.
     pthread_create(dispatcherThread, NULL, dispatch, (void *) dispatcher);
+}
 
+
+void createCoEditorsJob(pthread_t coEditorsThreads[], Dispatcher *dispatcher) {
+    pthread_create(&coEditorsThreads[0], NULL, coEditorJob, (void *) dispatcher->sports);
+    pthread_create(&coEditorsThreads[1], NULL, coEditorJob, (void *) dispatcher->weather);
+    pthread_create(&coEditorsThreads[2], NULL, coEditorJob, (void *) dispatcher->news);
 }
 
 
@@ -248,14 +253,16 @@ int main(int argc, char *argv[]) {
     // Initiate the bounded queue array.
     dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);//todo: Release!
     createBoundedQueues(producers, numOfProducers, boundedQueues);
-    Dispatcher *dispatcher = createNewDispatcher(boundedQueues, coEditorQueueSize, totalArticlesAmount, numOfProducers);
+    Dispatcher *dispatcher = createNewDispatcher(boundedQueues, numOfProducers);
 
     // Create an array of threads.
     pthread_t producersThreads[numOfProducers];
+    pthread_t coEditorsThreads[NUM_OF_ARTICLES_TYPE];
     pthread_t dispatcherThread;
+
     createProducersJob(producersThreads, producers, numOfProducers, boundedQueues);
     createDispatcherJob(&dispatcherThread, dispatcher);
-
+    createCoEditorsJob(coEditorsThreads, dispatcher);
 
     // Wait for all producers threads to finish.
     for (int i = 0; i < numOfProducers; i++) {
@@ -264,6 +271,12 @@ int main(int argc, char *argv[]) {
     }
     // Wait for the dispatcher thread to finish.
     pthread_join(dispatcherThread, NULL);
+
+    // Wait for all co editors to finish.
+    for(int i = 0; i < NUM_OF_ARTICLES_TYPE; i++){
+        pthread_join(coEditorsThreads[i], NULL);
+        printf("coeditor %d finished", i);
+    }
     return 0;
 }
 

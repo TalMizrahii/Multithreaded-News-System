@@ -3,15 +3,36 @@
 /**
  * Creating a new co editor.
  * @param serial The serial of the co editor.
- * @param boundedQueue The Bounded queue of the co-editor.
+ * @param unBoundedQueue The unbounded queue of the co-editor.
  * @return a pointer to the co editor on the heap.
  */
-CoEditor *createCoEditor(int serial, BoundedQueue *boundedQueue) {
+CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue) {
     CoEditor *coEditor;
     dataAllocation(1, sizeof(CoEditor), (void *) &coEditor); // todo: release!
-    coEditor->boundedQueue = boundedQueue;
+    coEditor->unBoundedQueue = unBoundedQueue;
     coEditor->articleSerial = serial;
     return coEditor;
+}
+
+
+
+void*coEditorJob(void *coEditorArg){
+    CoEditor *coEditor = (CoEditor*)coEditorArg;
+    Article *article;
+    int x = 1;
+    while (TRUE){
+        article = popFromUnBoundedQueue(coEditor->unBoundedQueue);
+        if(article->serial == DONE){
+
+            ////
+            break;
+        }
+        printf("co editor %d popednum %d\n", coEditor->articleSerial, x++);
+        // pushto screen manager.
+    }
+
+
+//    sleep(100000);
 }
 
 /**
@@ -35,18 +56,20 @@ Dispatcher *createDispatcher(BoundedQueue **boundedQueues) {
  * @param coEditorQueueSize The co-editors bounded queue size.
  * @return A pointer to the new dispatcher on the heap.
  */
-Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues,
-                                int coEditorQueueSize,
-                                int totalArticlesAmount,
-                                int numOfProducers) {
+
+/**
+ * Creating a dispatcher and assigning it co editors.
+ * @param boundedQueues The bounded queues of the producers.
+ * @param numOfProducers The number of producers in the system.
+ * @return A pointer to the new dispatcher on the heap.
+ */
+Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues,int numOfProducers) {
     // Declare a dispatcher.
     Dispatcher *dispatcher = createDispatcher(boundedQueues);
     // Assign it co editors.
-    dispatcher->sports = createCoEditor(SPORTS, createBoundedQueue(coEditorQueueSize));
-    dispatcher->weather = createCoEditor(WEATHER, createBoundedQueue(coEditorQueueSize));
-    dispatcher->news = createCoEditor(NEWS, createBoundedQueue(coEditorQueueSize));
-    // Set the total articles amount (to know when to stop).
-    dispatcher->totalArticlesAmount = totalArticlesAmount;
+    dispatcher->sports = createCoEditor(SPORTS, createUnBoundedQueue());
+    dispatcher->weather = createCoEditor(WEATHER, createUnBoundedQueue());
+    dispatcher->news = createCoEditor(NEWS, createUnBoundedQueue());
     // Set the number of producers (and bounded queues).
     dispatcher->numOfProducers = numOfProducers;
     return dispatcher;
@@ -60,13 +83,13 @@ Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues,
 void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR) {
     switch (article->serial) {
         case SPORTS:
-//            pushToBoundedQueue(article, dispatcher->sports->boundedQueue);
+            pushToUnBoundedQueue(article, dispatcher->sports->unBoundedQueue);
             break;
         case WEATHER:
-//            pushToBoundedQueue(article, dispatcher->weather->boundedQueue);
+            pushToUnBoundedQueue(article, dispatcher->weather->unBoundedQueue);
             break;
         case NEWS:
-//            pushToBoundedQueue(article, dispatcher->news->boundedQueue);
+            pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
             break;
         case DONE:
             for (int i = indexRR; i < dispatcher->numOfProducers; ++i) {
@@ -91,7 +114,7 @@ void *dispatch(void *dispatchArg) {
     // An article to transfer.
     Article *article;
     // As long as there are articles int the making.
-    while (1) {
+    while (TRUE) {
 //        printf("totalArticlesAmount:%d\n", dispatcher->totalArticlesAmount);
 //        printf("waiting for: %d\n", indexRR);
         // Pop an article from the bounded queue.
@@ -106,5 +129,11 @@ void *dispatch(void *dispatchArg) {
         // Decrease the amount of articles to sort by 1.
         dispatcher->totalArticlesAmount = dispatcher->totalArticlesAmount - 1;
     }
+
+    article = createArticle(-1, "DONE", -1, -1);
+    pushToUnBoundedQueue(article, dispatcher->sports->unBoundedQueue);
+    pushToUnBoundedQueue(article, dispatcher->weather->unBoundedQueue);
+    pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
+
     printf("dispatcher finish\n");
 }

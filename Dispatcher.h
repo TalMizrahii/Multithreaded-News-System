@@ -6,6 +6,7 @@
 #include <pthread.h>
 
 #include "BoundedQueue.h"
+#include "UnBoundedQueue.h"
 #include "ControlAndData.h"
 
 #define DONE (-1)
@@ -14,8 +15,7 @@
 #define NEWS 2
 
 typedef struct {
-    BoundedQueue *boundedQueue;
-    Article **unboundedQueue;
+    UnBoundedQueue *unBoundedQueue;
     int unboundedQueueSize;
     int articleSerial;
 } CoEditor;
@@ -30,15 +30,14 @@ typedef struct {
 
 } Dispatcher;
 
-CoEditor *createCoEditor(int serial, BoundedQueue *boundedQueue);
+CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue);
 
 Dispatcher *createDispatcher(BoundedQueue **boundedQueues);
 
-Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues,
-                                int coEditorQueueSize,
-                                int totalArticlesAmount,
-                                int numOfProducers);
+Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues, int numOfProducers);
 
 void *dispatch(void *dispatchArg);
+
+void *coEditorJob(void *coEditorArg);
 
 #endif //OS_EX3_DISPATCHER_H
