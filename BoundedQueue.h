@@ -18,8 +18,11 @@ typedef struct {
 } BoundedQueue;
 
 BoundedQueue *createBoundedQueue(int queueSize);
+
 Article *createArticle(int producerId, char *articlesType, int articleCount, int serial);
+
 void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue);
+
 Article *popFromBoundedQueue(BoundedQueue *boundedQueue);
 
 #endif //OS_EX3_BOUNDEDQUEUE_H

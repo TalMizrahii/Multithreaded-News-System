@@ -2,33 +2,42 @@
 
 
 /**
- *
- * @param queueSize
- * @return
+ * Creating a new unbounded queue.
+ * @return A pointer to the heap of the queue.
  */
 UnBoundedQueue *createUnBoundedQueue() {
+    // Allocate memory for the unbounded queue.
     UnBoundedQueue *unboundedQueue;
-    dataAllocation(1, sizeof(UnBoundedQueue), (void *) &unboundedQueue); // Allocate memory for the unbounded queue
+    dataAllocation(1, sizeof(UnBoundedQueue), (void *) &unboundedQueue);
+    // Allocate memory for the queue articles.
     dataAllocation(INITIATED_QUEUE_VAL, sizeof(Article *),
-                   (void **) &unboundedQueue->queueArticles); // Allocate memory for the queue articles
+                   (void **) &unboundedQueue->queueArticles);
+    // Set the initiated value of the unbounded queue.
     unboundedQueue->unboundedQueueSize = INITIATED_QUEUE_VAL;
+    // Set the "insert" index to 0.
     unboundedQueue->insert = 0;
+    // Set the "consume" index to 0.
     unboundedQueue->consume = 0;
-    pthread_mutex_init(&unboundedQueue->mutex, NULL); // Initialize the mutex for thread synchronization
+    // Initialize the mutex for thread synchronization.
+    pthread_mutex_init(&unboundedQueue->mutex, NULL);
+    // Initiate the semaphore of the "empty" status of the queue.
     sem_init(&unboundedQueue->empty, 0, 0);
+    // Return the unbounded queue.
     return unboundedQueue;
 }
 
 /**
- *
- * @param unboundedQueue
- * @param newQueueSize
+ * Check for the need to double the size of the unbounded queue.
+ * @param unboundedQueue The unbounded queue.
  */
 void resizeUnBoundedQueue(UnBoundedQueue *unboundedQueue) {
+    // Check if there are elements as space.
     if (unboundedQueue->insert == unboundedQueue->unboundedQueueSize) {
+        // If so, reallocate the size of the array to be double it's old size.
         unboundedQueue->unboundedQueueSize = unboundedQueue->unboundedQueueSize * DOUBLE;
         unboundedQueue->queueArticles = realloc(unboundedQueue->queueArticles,
                                                 unboundedQueue->unboundedQueueSize * (sizeof(Article *)));
+        // Check if the reallocation succeeded.
         if (unboundedQueue->queueArticles == NULL) {
             perror("Error in: realloc\n");
             exit(ERROR);
@@ -37,9 +46,9 @@ void resizeUnBoundedQueue(UnBoundedQueue *unboundedQueue) {
 }
 
 /**
- *
- * @param article
- * @param unboundedQueue
+ * Push an element to the unbounded queue safely.
+ * @param article The article to push.
+ * @param unboundedQueue The unbounded queue to push to.
  */
 void pushToUnBoundedQueue(Article *article, UnBoundedQueue *unboundedQueue) {
     // Lock the mutex when entering the critical section.
@@ -52,21 +61,27 @@ void pushToUnBoundedQueue(Article *article, UnBoundedQueue *unboundedQueue) {
     resizeUnBoundedQueue(unboundedQueue);
     // Unlock the mutex when leaving the critical section.
     pthread_mutex_unlock(&unboundedQueue->mutex);
+    // raise the semaphore of indication on the amount of elements in the queue.
     sem_post(&unboundedQueue->empty);
-
 }
 
 
 /**
- *
- * @param unboundedQueue
- * @return
+ * Pop an element from the unbounded queue safely.
+ * @param unboundedQueue The unbounded queue to pop an element from.
+ * @return The article that was popped.
  */
 Article *popFromUnBoundedQueue(UnBoundedQueue *unboundedQueue) {
+    // Check if there is an element in the queue we can pop.
     sem_wait(&unboundedQueue->empty);
+    // Lock the critical section with a mutex.
     pthread_mutex_lock(&unboundedQueue->mutex);
+    // Pop a new article from the queue.
     Article *article = unboundedQueue->queueArticles[unboundedQueue->consume];
+    // Set the "consume" index to the next location.
     unboundedQueue->consume = unboundedQueue->consume + 1;
+    // Unlock the critical section.
     pthread_mutex_unlock(&unboundedQueue->mutex);
+    // Return the pointer to the article we popped.
     return article;
 }

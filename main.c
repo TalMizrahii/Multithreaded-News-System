@@ -9,12 +9,8 @@
 #include "Producer.h"
 #include "BoundedQueue.h"
 #include "Dispatcher.h"
-
-
-typedef struct {
-    Producer *producer;
-    BoundedQueue *boundedQueue;
-} ProducerJobArgs;
+#include "CoEditor.h"
+#include "ScreenManager.h"
 
 
 /**
@@ -143,42 +139,6 @@ void createBoundedQueues(Producer **producers, int numOfProducers, BoundedQueue 
 }
 
 
-void *producerJob(void *producerJobArgs) {
-    // Extract the arguments from the struct.
-    ProducerJobArgs *args = (ProducerJobArgs *) producerJobArgs;
-    Producer *producer = args->producer;
-    BoundedQueue *boundedQueue = args->boundedQueue;
-    // An array contains types of news.
-    char *articlesType[NUM_OF_ARTICLES_TYPE] = {"SPORTS", "WEATHER", "NEWS"};
-    // An array to store how many articles of this type where already generated.
-    int articlesCount[NUM_OF_ARTICLES_TYPE] = {0, 0, 0};
-    // Declare a random number for the article.
-    int randomNumber = -1;
-    // Declare a new article pointer.
-    Article *article;
-    // Create an article and push it to the bounded queue.
-    for (int i = 0; i < producer->numberOfArticles; i++) {
-        // Generate random number modulo 3, what means it can be 0, 1 or 2.
-        randomNumber = rand() % NUM_OF_ARTICLES_TYPE;
-        // Raise the counter for the relevant type.
-        articlesCount[randomNumber]++;
-        // Create an article.
-        article = createArticle(producer->producerId,
-                                articlesType[randomNumber],
-                                articlesCount[randomNumber],
-                                randomNumber);
-        // Push it to the queue.
-        pushToBoundedQueue(article, boundedQueue);
-    }
-
-    // Set the last article to the bounded queue to sign the dispatcher this producer finished.
-    article = createArticle(producer->producerId, "DONE", -1, -1);
-    // Push it to the queue.
-    pushToBoundedQueue(article, boundedQueue);
-
-    printf("%d finished job\n", producer->producerId);
-}
-
 /**
  * Creating
  * @param producers
@@ -202,29 +162,61 @@ void createProducersJob(pthread_t producersThreads[], Producer **producers, int 
         pthread_create(&producersThreads[i], NULL, producerJob, producerJobArgs[i]);
     }
 
-
-
     // Release all producer args.
 //    for (int i = 0; i < numOfProducers; i++) {
 //        free(producerJobArgs[i]);
 //    }
 }
 
-
 /**
- *
- * @param dispatcher
+ * Launch the dispatcher.
+ * @param dispatcherThread The tread of the dispatcher.
+ * @param dispatcher The dispatcher struct.
  */
 void createDispatcherJob(pthread_t *dispatcherThread, Dispatcher *dispatcher) {
     // Run the thread with the dispatch function so the dispatcher will process the bounded queues.
     pthread_create(dispatcherThread, NULL, dispatch, (void *) dispatcher);
 }
 
-
+/**
+ * Launch the co-editors.
+ * @param coEditorsThreads The co-editors threads array.
+ * @param dispatcher The dispatcher which contains the co editors.
+ */
 void createCoEditorsJob(pthread_t coEditorsThreads[], Dispatcher *dispatcher) {
+    // Create all threads of the co editors and assign them the dispatcher job.
     pthread_create(&coEditorsThreads[0], NULL, coEditorJob, (void *) dispatcher->sports);
     pthread_create(&coEditorsThreads[1], NULL, coEditorJob, (void *) dispatcher->weather);
     pthread_create(&coEditorsThreads[2], NULL, coEditorJob, (void *) dispatcher->news);
+}
+
+
+
+/**
+ *
+ * @param producersThreads
+ * @param numOfProducers
+ * @param dispatcherThread
+ * @param coEditorsThreads
+ */
+void finishThreads(pthread_t producersThreads[],
+                   int numOfProducers,
+                   const pthread_t *dispatcherThread,
+                   pthread_t coEditorsThreads[]) {
+
+    // Wait for all producers threads to finish.
+    for (int i = 0; i < numOfProducers; i++) {
+        pthread_join(producersThreads[i], NULL);
+        printf("%d finished\n", i + 1);
+    }
+    // Wait for the dispatcher thread to finish.
+    pthread_join(*dispatcherThread, NULL);
+
+    // Wait for all co editors to finish.
+    for (int i = 0; i < NUM_OF_ARTICLES_TYPE; i++) {
+        pthread_join(coEditorsThreads[i], NULL);
+        printf("coeditor %d finished", i);
+    }
 }
 
 
@@ -255,27 +247,21 @@ int main(int argc, char *argv[]) {
     createBoundedQueues(producers, numOfProducers, boundedQueues);
     Dispatcher *dispatcher = createNewDispatcher(boundedQueues, numOfProducers);
 
-    // Create an array of threads.
+    // Create an array of threads for the producers.
     pthread_t producersThreads[numOfProducers];
+    // Create an array of threads for the co-editos.
     pthread_t coEditorsThreads[NUM_OF_ARTICLES_TYPE];
+    // Create the thread of the dispatcher.
     pthread_t dispatcherThread;
 
+    // Launch the producers.
     createProducersJob(producersThreads, producers, numOfProducers, boundedQueues);
+    // Launch the dispatcher.
     createDispatcherJob(&dispatcherThread, dispatcher);
+    // Launch the co-editors.
     createCoEditorsJob(coEditorsThreads, dispatcher);
 
-    // Wait for all producers threads to finish.
-    for (int i = 0; i < numOfProducers; i++) {
-        pthread_join(producersThreads[i], NULL);
-        printf("%d finished\n", i + 1);
-    }
-    // Wait for the dispatcher thread to finish.
-    pthread_join(dispatcherThread, NULL);
-
-    // Wait for all co editors to finish.
-    for(int i = 0; i < NUM_OF_ARTICLES_TYPE; i++){
-        pthread_join(coEditorsThreads[i], NULL);
-        printf("coeditor %d finished", i);
-    }
+    // Finish all threads.
+    finishThreads(producersThreads, numOfProducers, &dispatcherThread, coEditorsThreads);
     return 0;
 }

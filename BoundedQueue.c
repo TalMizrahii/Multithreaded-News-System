@@ -72,18 +72,24 @@ void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue) {
 }
 
 
-
 /**
  * Pop an article from a bounded buffer. Making the pop safe for the consumer by using semaphores and mutexes.
  * @param boundedQueue The bounded queue to pop from.
  * @return boundedQueue The bounded queue to push it to.
  */
 Article *popFromBoundedQueue(BoundedQueue *boundedQueue) {
+    // Check if the bounded queue is empty or not.
     sem_wait(&boundedQueue->full);
+    // Lock the critical section.
     pthread_mutex_lock(&boundedQueue->mutex);
+    // Get the article from the consume location.
     Article *article = boundedQueue->queueArticles[boundedQueue->consume];
+    // Get the next consume index to the next location.
     boundedQueue->consume = (boundedQueue->consume + 1) % boundedQueue->boundedQueueSize;
+    // Unlock the mutex.
     pthread_mutex_unlock(&boundedQueue->mutex);
+    // Raise the empty semaphore by 1.
     sem_post(&boundedQueue->empty);
+    // Return the article.
     return article;
 }

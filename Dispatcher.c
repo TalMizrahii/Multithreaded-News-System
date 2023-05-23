@@ -1,37 +1,6 @@
 #include "Dispatcher.h"
 
-/**
- * Creating a new co editor.
- * @param serial The serial of the co editor.
- * @param unBoundedQueue The unbounded queue of the co-editor.
- * @return a pointer to the co editor on the heap.
- */
-CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue) {
-    CoEditor *coEditor;
-    dataAllocation(1, sizeof(CoEditor), (void *) &coEditor); // todo: release!
-    coEditor->unBoundedQueue = unBoundedQueue;
-    coEditor->articleSerial = serial;
-    return coEditor;
-}
 
-void*coEditorJob(void *coEditorArg){
-    CoEditor *coEditor = (CoEditor*)coEditorArg;
-    Article *article;
-    int x = 1;
-    while (TRUE){
-        article = popFromUnBoundedQueue(coEditor->unBoundedQueue);
-        if(article->serial == DONE){
-
-            ////
-            break;
-        }
-        printf("co editor %d popednum %d\n", coEditor->articleSerial, x++);
-        // pushto screen manager.
-    }
-
-
-//    sleep(100000);
-}
 
 /**
  * Creating a dispatcher. NOT assigning it co-editors.
@@ -54,7 +23,7 @@ Dispatcher *createDispatcher(BoundedQueue **boundedQueues) {
  * @param numOfProducers The number of producers in the system.
  * @return A pointer to the new dispatcher on the heap.
  */
-Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues,int numOfProducers) {
+Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues, int numOfProducers) {
     // Declare a dispatcher.
     Dispatcher *dispatcher = createDispatcher(boundedQueues);
     // Assign it co editors.
@@ -66,10 +35,12 @@ Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues,int numOfProducers)
     return dispatcher;
 }
 
+
 /**
  * sorting the given article to the correct bounded queue of the co editor.
  * @param article The article to sort.
  * @param dispatcher The dispatcher of the program.
+ * @param indexRR The index that the dispatcher is on in the producers queue.
  */
 void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR) {
     switch (article->serial) {
@@ -93,9 +64,10 @@ void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR)
 }
 
 /**
- *
- * @param dispatchArg
- * @return
+ *  The dispatcher's job. responsible to get an article from the producer's queue,
+ *  and sort them to the co editors unbounded queues.
+ * @param dispatchArg The dispatcher struct.
+ * @return NULL.
  */
 void *dispatch(void *dispatchArg) {
     // Extract the dispatcher.
@@ -110,7 +82,7 @@ void *dispatch(void *dispatchArg) {
         article = popFromBoundedQueue(dispatcher->BoundedQueues[indexRR]);
         // Sort the article to the correct co editor's queue.
         setArticleToCoEditor(article, dispatcher, indexRR);
-        if(!dispatcher->numOfProducers){
+        if (!dispatcher->numOfProducers) {
             break;
         }
         // Set the circle round-robin index to the next location.
@@ -118,11 +90,13 @@ void *dispatch(void *dispatchArg) {
         // Decrease the amount of articles to sort by 1.
         dispatcher->totalArticlesAmount = dispatcher->totalArticlesAmount - 1;
     }
-
+    // Create a new article to sign the co editors that the dispatcher finished.
     article = createArticle(-1, "DONE", -1, -1);
+    // Set it to all co editors.
     pushToUnBoundedQueue(article, dispatcher->sports->unBoundedQueue);
     pushToUnBoundedQueue(article, dispatcher->weather->unBoundedQueue);
     pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
 
-    printf("dispatcher finish\n");
+    printf("dispatcher finish\n"); // DELETE!!!!!!!!!
+    return NULL;
 }
