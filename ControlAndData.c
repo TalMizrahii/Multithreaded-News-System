@@ -1,5 +1,38 @@
 #include "ControlAndData.h"
 
+/**
+ * A destructor for the article.
+ * @param article A pointer to an article.
+ */
+void destroyArticle(Article *article) {
+    // Deallocate the article.
+    free(article);
+    // Set its pointer to null.
+    article = NULL;
+}
+
+/**
+ * Create an article using the producerId, articlesType for its title,
+ * and the articlesCount to track how many was made from this type.
+ * @param producerId The ID of the producer who made the article.
+ * @param articlesType The types of what the article can be (string).
+ * @param articlesCount The count for the article (how many made so far).
+ * @return A pointer to the article on the heap.
+ */
+Article *createArticle(int producerId, char *articlesType, int articleCount, int serial) {
+    // Create a new article and allocate data for it.
+    Article *article;
+    dataAllocation(1, sizeof(Article), (void *) &article);
+    // Assign the producer id to the article.
+    article->madeByProducerID = producerId;
+    // Assign the type (string) of the article.
+    strcpy(article->articleStr, articlesType);
+    // Assign the number of articles produces so far from this type (not included).
+    article->lastNumOfArticles = articleCount;
+    // Set the serial number of the article.
+    article->serial = serial;
+    return article;
+}
 
 /**
  * A data allocation function using malloc.

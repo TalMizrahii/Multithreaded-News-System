@@ -18,4 +18,6 @@ void *coEditorJob(void *coEditorArg);
 
 CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue);
 
+void destroyCoEditor(CoEditor * coEditor);
+
 #endif //OS_EX3_COEDITOR_H

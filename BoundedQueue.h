@@ -3,7 +3,6 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include <string.h>
 #include "ControlAndData.h"
 
 
@@ -19,7 +18,8 @@ typedef struct {
 
 BoundedQueue *createBoundedQueue(int queueSize);
 
-Article *createArticle(int producerId, char *articlesType, int articleCount, int serial);
+void destroyBoundedQueue(BoundedQueue *boundedQueue);
+
 
 void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue);
 

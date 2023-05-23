@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-
+#include <string.h>
 
 #define ERROR (-1)
 #define MAX_SIZE_OF_NEWS_STR 20
@@ -33,6 +33,10 @@ void dataAllocation(int amount, int sizeOfType, void **pointerToAllocatedData);
 void ValidateConfigurationFile(int numProducers, int coEditorQueueSize);
 
 FILE *openFile(char *filePath);
+
+void destroyArticle(Article *article);
+
+Article *createArticle(int producerId, char *articlesType, int articleCount, int serial);
 
 void argCheck(int argc);
 

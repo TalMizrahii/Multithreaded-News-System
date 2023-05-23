@@ -18,6 +18,10 @@ typedef struct {
 
 Producer *createProducer(int producerId, int numberOfArticles, int queueSize);
 
+void destroyProducer(Producer *producer);
+
+void destroyProducerJobArgs(ProducerJobArgs *producerJobArgs);
+
 void *producerJob(void *producerJobArgs);
 
 #endif //OS_EX3_PRODUCER_H

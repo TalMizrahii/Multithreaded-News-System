@@ -1,5 +1,24 @@
 #include "UnBoundedQueue.h"
 
+/**
+ * Destructor for the unbounded queue. NOT destroying the articles it pointed.
+ * @param unBoundedQueue A pointer to the unbounded queue to destroy.
+ */
+void destroyUnboundedQueue(UnBoundedQueue *unBoundedQueue) {
+    // Destroy the mutex when no longer needed.
+    pthread_mutex_destroy(&unBoundedQueue->mutex);
+    // Destroy the "empty" semaphore when no longer needed.
+    sem_destroy(&unBoundedQueue->empty);
+    // Free the array of POINTERS to articles. Not the articles!
+    free(unBoundedQueue->queueArticles);
+    // Set it to null.
+    unBoundedQueue->queueArticles = NULL;
+    // Free the unbounded queue.
+    free(unBoundedQueue);
+    // Set it to null.
+    unBoundedQueue = NULL;
+}
+
 
 /**
  * Creating a new unbounded queue.

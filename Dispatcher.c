@@ -1,5 +1,24 @@
 #include "Dispatcher.h"
 
+/**
+ * A destructor for the dispatcher. NOT destroying the articles and the co editors.
+ * @param dispatcher A pointer to the dispatcher.
+ */
+void destroyDispatcher(Dispatcher *dispatcher) {
+    // Destroy the bounded queues of the producers.
+    for (int i = 0; i < dispatcher->numOfProducers; i++) {
+        // Free the producer array.
+        destroyBoundedQueue(dispatcher->BoundedQueues[i]);
+    }
+    // Free the all array of producers.
+    free(dispatcher->BoundedQueues);
+    // Set the full array to null.
+    dispatcher->BoundedQueues = NULL;
+    // Free the dispatcher.
+    free(dispatcher);
+    // Set it to null.
+    dispatcher = NULL;
+}
 
 /**
  * Creating a dispatcher. NOT assigning it co-editors.
@@ -30,10 +49,10 @@ Dispatcher *createNewDispatcherAndCoEditors(BoundedQueue **boundedQueues, int nu
     dispatcher->weather = createCoEditor(WEATHER, createUnBoundedQueue());
     dispatcher->news = createCoEditor(NEWS, createUnBoundedQueue());
     // Set the number of producers (and bounded queues).
+    dispatcher->currentNumOfProducers = numOfProducers;
     dispatcher->numOfProducers = numOfProducers;
     return dispatcher;
 }
-
 
 /**
  * sorting the given article to the correct bounded queue of the co editor.
@@ -58,12 +77,12 @@ void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR)
             break;
         case DONE:
             // If it is the done article, shrink the producers array to the left.
-            for (int i = indexRR; i < dispatcher->numOfProducers; ++i) {
+            for (int i = indexRR; i < dispatcher->currentNumOfProducers; ++i) {
+
                 dispatcher->BoundedQueues[i] = dispatcher->BoundedQueues[i + 1];
             }
             // Decrease the number of producers by 1.
-            dispatcher->numOfProducers = dispatcher->numOfProducers - 1;
-            // todo: Free producer!
+            dispatcher->currentNumOfProducers = dispatcher->currentNumOfProducers - 1;
             break;
     }
 }
@@ -87,13 +106,11 @@ void *dispatch(void *dispatchArg) {
         article = popFromBoundedQueue(dispatcher->BoundedQueues[indexRR]);
         // Sort the article to the correct co editor's queue.
         setArticleToCoEditor(article, dispatcher, indexRR);
-        if (!dispatcher->numOfProducers) {
+        if (!dispatcher->currentNumOfProducers) {
             break;
         }
         // Set the circle round-robin index to the next location.
-        indexRR = (indexRR + 1) % dispatcher->numOfProducers;
-        // Decrease the amount of articles to sort by 1.
-        dispatcher->totalArticlesAmount = dispatcher->totalArticlesAmount - 1;
+        indexRR = (indexRR + 1) % dispatcher->currentNumOfProducers;
     }
     // Create a new article to sign the co editors that the dispatcher finished.
     article = createArticle(-1, "DONE", -1, -1);
@@ -101,5 +118,7 @@ void *dispatch(void *dispatchArg) {
     pushToUnBoundedQueue(article, dispatcher->sports->unBoundedQueue);
     pushToUnBoundedQueue(article, dispatcher->weather->unBoundedQueue);
     pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
+    // Destroy the dispatcher.
+//    destroyDispatcher(dispatcher);
     return NULL;
 }

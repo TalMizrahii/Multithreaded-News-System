@@ -96,9 +96,7 @@ void createBoundedQueues(Producer **producers, int numOfProducers, BoundedQueue 
  * @param boundedQueues
  */
 void createProducersJob(pthread_t producersThreads[], Producer **producers, int numOfProducers,
-                        BoundedQueue **boundedQueues) {
-    // Create an array for the producers arguments.
-    ProducerJobArgs *producerJobArgs[numOfProducers];
+                        BoundedQueue **boundedQueues, ProducerJobArgs *producerJobArgs[]) {
     // Go over all producers.
     for (int i = 0; i < numOfProducers; i++) {
         // Create an array for the producers arguments.
@@ -173,6 +171,13 @@ void finishThreads(pthread_t producersThreads[],
     pthread_join(*screenManagerThread, NULL);
 }
 
+
+void clearData(){
+
+
+
+}
+
 /**
  *
  * @param argc
@@ -198,6 +203,8 @@ int main(int argc, char *argv[]) {
     dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);//todo: Release!
     // Create the bounded queues.
     createBoundedQueues(producers, numOfProducers, boundedQueues);
+    // Create an array for the producers arguments.
+    ProducerJobArgs *producerJobArgs[numOfProducers];
     // Create the dispatcher.
     Dispatcher *dispatcher = createNewDispatcherAndCoEditors(boundedQueues, numOfProducers);
     // Create the screen manager.
@@ -213,12 +220,24 @@ int main(int argc, char *argv[]) {
     //Launch the screen manager.
     createScreenManagerJob(&screenManagerThread, screenManager);
     // Launch the producers.
-    createProducersJob(producersThreads, producers, numOfProducers, boundedQueues);
+    createProducersJob(producersThreads, producers, numOfProducers, boundedQueues, producerJobArgs);
     // Launch the dispatcher.
     createDispatcherJob(&dispatcherThread, dispatcher);
     // Launch the co-editors.
     createCoEditorsJob(coEditorsThreads, dispatcher);
     // Finish all threads.
     finishThreads(producersThreads, numOfProducers, &dispatcherThread, coEditorsThreads, &screenManagerThread);
+
+    for(int i = 0; i < numOfProducers; i++){
+        destroyProducerJobArgs(producerJobArgs[i]);
+        destroyProducer(producers[i]);
+    }
+    free(producers);
+    destroyCoEditor(dispatcher->news);
+    destroyCoEditor(dispatcher->sports);
+    destroyCoEditor(dispatcher->weather);
+    destroyDispatcher(dispatcher);
+
+//    clearData(producerJobArgs, producers)
     return 0;
 }

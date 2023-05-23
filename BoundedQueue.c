@@ -1,5 +1,26 @@
 #include "BoundedQueue.h"
 
+/**
+ * Destructor for the bounded queue. NOT destroying the articles it pointed.
+ * @param boundedQueue A pointer to the bounded queue to destroy.
+ */
+void destroyBoundedQueue(BoundedQueue *boundedQueue) {
+    if (boundedQueue == NULL) return;
+    // Destroy the mutex when no longer needed.
+    pthread_mutex_destroy(&boundedQueue->mutex);
+    // Destroy the semaphores when no longer needed
+    sem_destroy(&boundedQueue->empty);
+    sem_destroy(&boundedQueue->full);
+    // Free the array of POINTERS to articles. Not the articles!
+    free(boundedQueue->queueArticles);
+    // Set it to null.
+    boundedQueue->queueArticles = NULL;
+    // Free the bounded queue.
+    free(boundedQueue);
+    // Set it to null.
+    boundedQueue = NULL;
+}
+
 
 /**
  * Create a bounded queue on the heap.
@@ -10,46 +31,22 @@ BoundedQueue *createBoundedQueue(int queueSize) {
     // Declare a new queue.
     BoundedQueue *boundedQueue;
     // Allocate data for it.
-    dataAllocation(1, sizeof(BoundedQueue), (void *) &boundedQueue);//todo: Release!
+    dataAllocation(1, sizeof(BoundedQueue), (void *) &boundedQueue);
     // Allocate data for its articles array.
-    dataAllocation(queueSize, sizeof(Article *), (void **) &boundedQueue->queueArticles);//todo: Release!
+    dataAllocation(queueSize, sizeof(Article *), (void **) &boundedQueue->queueArticles);
     // Set the size of the queue.
     boundedQueue->boundedQueueSize = queueSize;
     // Set the values of the insert location and consume location to 0.
     boundedQueue->insert = 0;
     boundedQueue->consume = 0;
     // Initiate the mutex.
-    pthread_mutex_init(&boundedQueue->mutex, NULL); //todo: Release!
-    sem_init(&boundedQueue->empty, 0, queueSize); //todo: Release!
+    pthread_mutex_init(&boundedQueue->mutex, NULL);
+    sem_init(&boundedQueue->empty, 0, queueSize);
     // Set the semaphore full to the queue size, to initiate it to all spots available.
-    sem_init(&boundedQueue->full, 0, 0);//todo: Release!
+    sem_init(&boundedQueue->full, 0, 0);
     // Return the bounded queue.
     return boundedQueue;
 }
-
-/**
- * Create an article using the producerId, articlesType for its title,
- * and the articlesCount to track how many was made from this type.
- * @param producerId The ID of the producer who made the article.
- * @param articlesType The types of what the article can be (string).
- * @param articlesCount The count for the article (how many made so far).
- * @return A pointer to the article on the heap.
- */
-Article *createArticle(int producerId, char *articlesType, int articleCount, int serial) {
-    // Create a new article and allocate data for it.
-    Article *article;
-    dataAllocation(1, sizeof(Article), (void *) &article);
-    // Assign the producer id to the article.
-    article->madeByProducerID = producerId;
-    // Assign the type (string) of the article.
-    strcpy(article->articleStr, articlesType);
-    // Assign the number of articles produces so far from this type (not included).
-    article->lastNumOfArticles = articleCount;
-    // Set the serial number of the article.
-    article->serial = serial;
-    return article;
-}
-
 
 /**
  * Pushing to a bounded queue an article. Making the push safe for the producer by using semaphores and mutexes.
@@ -71,11 +68,10 @@ void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue) {
     sem_post(&boundedQueue->full);
 }
 
-
 /**
  * Pop an article from a bounded buffer. Making the pop safe for the consumer by using semaphores and mutexes.
  * @param boundedQueue The bounded queue to pop from.
- * @return boundedQueue The bounded queue to push it to.
+ * @return An article from the queue.
  */
 Article *popFromBoundedQueue(BoundedQueue *boundedQueue) {
     // Check if the bounded queue is empty or not.

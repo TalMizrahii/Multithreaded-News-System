@@ -20,6 +20,8 @@ typedef struct {
 
 UnBoundedQueue *createUnBoundedQueue();
 
+void destroyUnboundedQueue(UnBoundedQueue *unBoundedQueue);
+
 Article *createArticle(int producerId, char *articlesType, int articleCount, int serial);
 
 void pushToUnBoundedQueue(Article *article, UnBoundedQueue *unboundedQueue);

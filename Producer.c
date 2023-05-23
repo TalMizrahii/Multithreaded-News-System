@@ -1,6 +1,28 @@
 #include "Producer.h"
 
 /**
+ * Destructor for the producer.
+ * @param producer A Pointer to the producer pointer.
+ */
+void destroyProducer(Producer *producer) {
+    // Deallocate the producer's data.
+    free(producer);
+    // Set its pointer to null.
+    producer = NULL;
+}
+
+/**
+ * A destructor for the producerJobArgs struct. Not destroying the producer or the queue.
+ * @param producerJobArgs A pointer to the producerJobArgs pointer.
+ */
+void destroyProducerJobArgs(ProducerJobArgs *producerJobArgs) {
+    // Deallocate the producerJobArgs struct.
+    free(producerJobArgs);
+    // Set it to NULL.
+    producerJobArgs = NULL;
+}
+
+/**
  * Creating new producer.
  * @param producerId The producer id.
  * @param numberOfArticles The number of articles it needs to create.
@@ -11,7 +33,7 @@ Producer *createProducer(int producerId, int numberOfArticles, int queueSize) {
     // Create a new producer and allocate data for it.
     Producer *producer;
     dataAllocation(1, sizeof(Producer), (void *) &producer);//todo: Release!
-    // Set it's producer's id.
+    // Set its producer's id.
     producer->producerId = producerId;
     // Set the number of articles it should produce.
     producer->numberOfArticles = numberOfArticles;
@@ -68,4 +90,9 @@ void *producerJob(void *producerJobArgs) {
     Article *article = createArticle(producer->producerId, "DONE", -1, -1);
     // Push it to the queue.
     pushToBoundedQueue(article, boundedQueue);
+    // Destroy the producer.
+//    destroyProducer(&producer);
+    // Destroy the ProducerJobArgs.
+//    destroyProducerJobArgs(producerJobArgs);
+    return NULL;
 }
