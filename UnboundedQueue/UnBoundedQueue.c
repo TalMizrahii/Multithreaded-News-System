@@ -19,7 +19,6 @@ void destroyUnboundedQueue(UnBoundedQueue *unBoundedQueue) {
     unBoundedQueue = NULL;
 }
 
-
 /**
  * Creating a new unbounded queue.
  * @return A pointer to the heap of the queue.
@@ -83,7 +82,6 @@ void pushToUnBoundedQueue(Article *article, UnBoundedQueue *unboundedQueue) {
     // raise the semaphore of indication on the amount of elements in the queue.
     sem_post(&unboundedQueue->empty);
 }
-
 
 /**
  * Pop an element from the unbounded queue safely.

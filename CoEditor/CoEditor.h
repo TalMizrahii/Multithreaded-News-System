@@ -1,10 +1,9 @@
 #ifndef OS_EX3_COEDITOR_H
 #define OS_EX3_COEDITOR_H
 
-#include "UnBoundedQueue.h"
-#include "ControlAndData.h"
-#include "BoundedQueue.h"
-
+#include "../UnboundedQueue/UnBoundedQueue.h"
+#include "../ControlAndData/ControlAndData.h"
+#include "../BoundedQueue/BoundedQueue.h"
 
 typedef struct {
     UnBoundedQueue *unBoundedQueue;
@@ -13,11 +12,10 @@ typedef struct {
     BoundedQueue *SMBoundedQueue;
 } CoEditor;
 
-
 void *coEditorJob(void *coEditorArg);
 
 CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue);
 
-void destroyCoEditor(CoEditor * coEditor);
+void destroyCoEditor(CoEditor *coEditor);
 
 #endif //OS_EX3_COEDITOR_H

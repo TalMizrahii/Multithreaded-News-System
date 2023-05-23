@@ -5,12 +5,12 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#include "ControlAndData.h"
-#include "Producer.h"
-#include "BoundedQueue.h"
-#include "Dispatcher.h"
-#include "CoEditor.h"
-#include "ScreenManager.h"
+#include "ControlAndData/ControlAndData.h"
+#include "Producer/Producer.h"
+#include "BoundedQueue/BoundedQueue.h"
+#include "Dispatcher/Dispatcher.h"
+#include "CoEditor/CoEditor.h"
+#include "ScreenManager/ScreenManager.h"
 
 /**
  * Check if the array needs to be resized.
@@ -90,13 +90,16 @@ void createBoundedQueues(Producer **producers, int numOfProducers, BoundedQueue 
 }
 
 /**
- * Creating
- * @param producers
- * @param numOfProducers
- * @param boundedQueues
+ * Launch all producers with their bounded buffer threw an ProducerJobArgs struct.
+ * @param producers The array of producers.
+ * @param numOfProducers The amount of producers.
+ * @param boundedQueues The array of the bounded queue.
  */
-void createProducersJob(pthread_t producersThreads[], Producer **producers, int numOfProducers,
-                        BoundedQueue **boundedQueues, ProducerJobArgs *producerJobArgs[]) {
+void createProducersJob(pthread_t producersThreads[],
+                        Producer **producers,
+                        int numOfProducers,
+                        BoundedQueue **boundedQueues,
+                        ProducerJobArgs *producerJobArgs[]) {
     // Go over all producers.
     for (int i = 0; i < numOfProducers; i++) {
         // Create an array for the producers arguments.
@@ -171,18 +174,12 @@ void finishThreads(pthread_t producersThreads[],
     pthread_join(*screenManagerThread, NULL);
 }
 
-
-void clearData(){
-
-
-
-}
-
 /**
- *
- * @param argc
- * @param argv
- * @return
+ * The main function. Responsible to manage as a control flow to process the configuration file,
+ * initiate data and create threads.
+ * @param argc The amount of arguments received to the program.
+ * @param argv The array of arguments.
+ * @return 0 if succeeded.
  */
 int main(int argc, char *argv[]) {
     // Validate the number of arguments.
@@ -194,13 +191,13 @@ int main(int argc, char *argv[]) {
     // Declare a pointer to the producers array.
     Producer **producers;
     // Allocate data for the producers array.
-    dataAllocation(producersArrayMaxSize, sizeof(Producer *), (void **) &producers);//todo: Release!
+    dataAllocation(producersArrayMaxSize, sizeof(Producer *), (void **) &producers);
     // Read the configuration file.
     readConf(argv[1], producers, &numOfProducers, producersArrayMaxSize, &coEditorQueueSize, &totalArticlesAmount);
     // Create the Bounded queues for the producers.
     BoundedQueue **boundedQueues;
     // Allocate data for the bounded queue array.
-    dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);//todo: Release!
+    dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);
     // Create the bounded queues.
     createBoundedQueues(producers, numOfProducers, boundedQueues);
     // Create an array for the producers arguments.
@@ -227,17 +224,5 @@ int main(int argc, char *argv[]) {
     createCoEditorsJob(coEditorsThreads, dispatcher);
     // Finish all threads.
     finishThreads(producersThreads, numOfProducers, &dispatcherThread, coEditorsThreads, &screenManagerThread);
-
-    for(int i = 0; i < numOfProducers; i++){
-        destroyProducerJobArgs(producerJobArgs[i]);
-        destroyProducer(producers[i]);
-    }
-    free(producers);
-    destroyCoEditor(dispatcher->news);
-    destroyCoEditor(dispatcher->sports);
-    destroyCoEditor(dispatcher->weather);
-    destroyDispatcher(dispatcher);
-
-//    clearData(producerJobArgs, producers)
     return 0;
 }

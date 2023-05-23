@@ -1,6 +1,5 @@
 #include "CoEditor.h"
 
-
 /**
  * A destructor for the co editor.Not destroying the bounded queue with the screen manager.
  * @param coEditor A pointer to a co editor to destroy.
@@ -23,7 +22,7 @@ void destroyCoEditor(CoEditor *coEditor) {
 CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue) {
     // Create a new co editor and allocate data for it.
     CoEditor *coEditor;
-    dataAllocation(1, sizeof(CoEditor), (void *) &coEditor); // todo: release!
+    dataAllocation(1, sizeof(CoEditor), (void *) &coEditor);
     // Set it an unbounded queue.
     coEditor->unBoundedQueue = unBoundedQueue;
     // Set to it the co editor's serial number.
@@ -49,13 +48,16 @@ void *coEditorJob(void *coEditorArg) {
         article = popFromUnBoundedQueue(coEditor->unBoundedQueue);
         // If it's a "DONE" article.
         if (article->serial == DONE) {
+            // Push the same DONE article to the screen manager common queue.
             pushToBoundedQueue(article, coEditor->SMBoundedQueue);
             break;
         }
+        // Sleep for 0.1 second.
         usleep(TENTH_SEC);
+        // Push the article to the bounded common queue.
         pushToBoundedQueue(article, coEditor->SMBoundedQueue);
     }
     // Destroy the co editor.
-//    destroyCoEditor(coEditor);
+    destroyCoEditor(coEditor);
     return NULL;
 }

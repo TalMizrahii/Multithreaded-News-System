@@ -5,11 +5,6 @@
  * @param dispatcher A pointer to the dispatcher.
  */
 void destroyDispatcher(Dispatcher *dispatcher) {
-    // Destroy the bounded queues of the producers.
-    for (int i = 0; i < dispatcher->numOfProducers; i++) {
-        // Free the producer array.
-        destroyBoundedQueue(dispatcher->BoundedQueues[i]);
-    }
     // Free the all array of producers.
     free(dispatcher->BoundedQueues);
     // Set the full array to null.
@@ -76,9 +71,12 @@ void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR)
             pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
             break;
         case DONE:
+            // Free the ended queue.
+            free(dispatcher->BoundedQueues[indexRR]);
+            // Destroy the done article.
+            destroyArticle(article);
             // If it is the done article, shrink the producers array to the left.
             for (int i = indexRR; i < dispatcher->currentNumOfProducers; ++i) {
-
                 dispatcher->BoundedQueues[i] = dispatcher->BoundedQueues[i + 1];
             }
             // Decrease the number of producers by 1.
@@ -119,6 +117,6 @@ void *dispatch(void *dispatchArg) {
     pushToUnBoundedQueue(article, dispatcher->weather->unBoundedQueue);
     pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
     // Destroy the dispatcher.
-//    destroyDispatcher(dispatcher);
+    destroyDispatcher(dispatcher);
     return NULL;
 }

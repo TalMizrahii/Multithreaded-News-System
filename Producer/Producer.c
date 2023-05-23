@@ -32,7 +32,7 @@ void destroyProducerJobArgs(ProducerJobArgs *producerJobArgs) {
 Producer *createProducer(int producerId, int numberOfArticles, int queueSize) {
     // Create a new producer and allocate data for it.
     Producer *producer;
-    dataAllocation(1, sizeof(Producer), (void *) &producer);//todo: Release!
+    dataAllocation(1, sizeof(Producer), (void *) &producer);
     // Set its producer's id.
     producer->producerId = producerId;
     // Set the number of articles it should produce.
@@ -91,8 +91,8 @@ void *producerJob(void *producerJobArgs) {
     // Push it to the queue.
     pushToBoundedQueue(article, boundedQueue);
     // Destroy the producer.
-//    destroyProducer(&producer);
+    destroyProducer(producer);
     // Destroy the ProducerJobArgs.
-//    destroyProducerJobArgs(producerJobArgs);
+    destroyProducerJobArgs(producerJobArgs);
     return NULL;
 }

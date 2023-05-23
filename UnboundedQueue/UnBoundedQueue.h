@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <string.h>
-#include "ControlAndData.h"
+#include "../ControlAndData/ControlAndData.h"
 
 #define MAX_SIZE_OF_NEWS_STR 20
 #define INITIATED_QUEUE_VAL 10
