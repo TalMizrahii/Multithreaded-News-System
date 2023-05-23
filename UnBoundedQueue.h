@@ -19,8 +19,11 @@ typedef struct {
 } UnBoundedQueue;
 
 UnBoundedQueue *createUnBoundedQueue();
+
 Article *createArticle(int producerId, char *articlesType, int articleCount, int serial);
+
 void pushToUnBoundedQueue(Article *article, UnBoundedQueue *unboundedQueue);
+
 Article *popFromUnBoundedQueue(UnBoundedQueue *unboundedQueue);
 
 #endif //OS_EX3_UNBOUNDEDQUEUE_H

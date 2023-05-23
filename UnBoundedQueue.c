@@ -68,7 +68,5 @@ Article *popFromUnBoundedQueue(UnBoundedQueue *unboundedQueue) {
     Article *article = unboundedQueue->queueArticles[unboundedQueue->consume];
     unboundedQueue->consume = unboundedQueue->consume + 1;
     pthread_mutex_unlock(&unboundedQueue->mutex);
-
-
     return article;
 }

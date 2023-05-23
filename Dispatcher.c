@@ -14,8 +14,6 @@ CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue) {
     return coEditor;
 }
 
-
-
 void*coEditorJob(void *coEditorArg){
     CoEditor *coEditor = (CoEditor*)coEditorArg;
     Article *article;
@@ -49,13 +47,6 @@ Dispatcher *createDispatcher(BoundedQueue **boundedQueues) {
     // Return the pointer to the heap.
     return dispatcher;
 }
-
-/**
- * Creating a dispatcher and assigning it co editors.
- * @param boundedQueues The bounded queues of the producers.
- * @param coEditorQueueSize The co-editors bounded queue size.
- * @return A pointer to the new dispatcher on the heap.
- */
 
 /**
  * Creating a dispatcher and assigning it co editors.
@@ -115,8 +106,6 @@ void *dispatch(void *dispatchArg) {
     Article *article;
     // As long as there are articles int the making.
     while (TRUE) {
-//        printf("totalArticlesAmount:%d\n", dispatcher->totalArticlesAmount);
-//        printf("waiting for: %d\n", indexRR);
         // Pop an article from the bounded queue.
         article = popFromBoundedQueue(dispatcher->BoundedQueues[indexRR]);
         // Sort the article to the correct co editor's queue.

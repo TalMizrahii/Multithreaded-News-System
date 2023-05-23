@@ -279,14 +279,3 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
-
-
-
-// DELETE from here!!!!
-// Printing the read values for verification
-//    for (int i = 0; i < numOfProducers; i++) {
-//        printf("Producer %d:\n", producers[i]->producerId);
-//        printf("Producer value: %d\n", producers[i]->numberOfArticles);
-//        printf("Queue size: %d\n\n", producers[i]->queueSize);
-//    }
-//    printf("Co-Editor queue size: %d\n", coEditorQueueSize);
