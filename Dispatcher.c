@@ -23,7 +23,7 @@ Dispatcher *createDispatcher(BoundedQueue **boundedQueues) {
  * @param numOfProducers The number of producers in the system.
  * @return A pointer to the new dispatcher on the heap.
  */
-Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues, int numOfProducers) {
+Dispatcher *createNewDispatcherAndCoEditors(BoundedQueue **boundedQueues, int numOfProducers) {
     // Declare a dispatcher.
     Dispatcher *dispatcher = createDispatcher(boundedQueues);
     // Assign it co editors.
@@ -96,7 +96,5 @@ void *dispatch(void *dispatchArg) {
     pushToUnBoundedQueue(article, dispatcher->sports->unBoundedQueue);
     pushToUnBoundedQueue(article, dispatcher->weather->unBoundedQueue);
     pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
-
-    printf("dispatcher finish\n"); // DELETE!!!!!!!!!
     return NULL;
 }

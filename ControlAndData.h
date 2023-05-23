@@ -30,4 +30,10 @@ typedef struct {
 
 void dataAllocation(int amount, int sizeOfType, void **pointerToAllocatedData);
 
+void ValidateConfigurationFile(int numProducers, int coEditorQueueSize);
+
+FILE *openFile(char *filePath);
+
+void argCheck(int argc);
+
 #endif //OS_EX3_CONTROLANDDATA_H

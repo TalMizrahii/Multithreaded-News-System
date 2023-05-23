@@ -26,15 +26,19 @@ CoEditor *createCoEditor(int serial, UnBoundedQueue *unBoundedQueue) {
 void *coEditorJob(void *coEditorArg) {
     // Extract the co-editor.
     CoEditor *coEditor = (CoEditor *) coEditorArg;
+    // create a pointer to store the articles.
     Article *article;
+    // As long as there are articles to edit.
     while (TRUE) {
+        // Pop an article from the unbounded queue.
         article = popFromUnBoundedQueue(coEditor->unBoundedQueue);
+        // If it's a "DONE" article.
         if (article->serial == DONE) {
-            // Push DONE
+            pushToBoundedQueue(article, coEditor->SMBoundedQueue);
             break;
         }
         usleep(TENTH_SEC);
-        // pushto screen manager.
+        pushToBoundedQueue(article, coEditor->SMBoundedQueue);
     }
     return NULL;
 }

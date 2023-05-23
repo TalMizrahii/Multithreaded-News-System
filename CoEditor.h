@@ -3,11 +3,13 @@
 
 #include "UnBoundedQueue.h"
 #include "ControlAndData.h"
+#include "BoundedQueue.h"
 
 typedef struct {
     UnBoundedQueue *unBoundedQueue;
     int unboundedQueueSize;
     int articleSerial;
+    BoundedQueue *SMBoundedQueue;
 } CoEditor;
 
 

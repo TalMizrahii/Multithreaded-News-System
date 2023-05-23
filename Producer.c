@@ -70,6 +70,4 @@ void *producerJob(void *producerJobArgs) {
     Article *article = createArticle(producer->producerId, "DONE", -1, -1);
     // Push it to the queue.
     pushToBoundedQueue(article, boundedQueue);
-
-    printf("%d finished job\n", producer->producerId); // DELETE!!!!!!!!!1
 }

@@ -13,33 +13,7 @@
 #include "ScreenManager.h"
 
 
-/**
- * Validate that the program received the proper amount of arguments.
- * @param argc The number of arguments.
- */
-void argCheck(int argc) {
-    if (argc != ARGUMENTS_NUM) {
-        perror("Invalid argument number\n");
-        exit(ERROR);
-    }
-}
 
-
-/**
- * Opening the file from the configuration file.
- * @param file Pointer to the file type.
- * @param argv The path to the file to open.
- */
-FILE *openFile(char *filePath) {
-    // Open the file.
-    FILE *file = fopen(filePath, "r");
-    // If the file is null the opening fail. Print an error message and exit.
-    if (file == NULL) {
-        printf("Error opening file.\n");
-        exit(ERROR);
-    }
-    return file;
-}
 
 
 /**
@@ -61,24 +35,6 @@ void checkResizeProdArray(Producer **producers, int *currentArrayMaxSize, int nu
     }
 }
 
-
-/**
- * Check if the configuration file contains enough producers and the co-Editor queue size is positive.
- * @param numProducers the number of producers.
- * @param coEditorQueueSize The bound for the co editors queue size.
- */
-void ValidateConfigurationFile(int numProducers, int coEditorQueueSize) {
-    // Validate the number of producers received.
-    if (numProducers <= 0) {
-        perror("Not enough producers\n");
-        exit(ERROR);
-    }
-    // Validate the size of the co-editors queue.
-    if (coEditorQueueSize <= 0) {
-        perror("Not A valid co-Editor queue size\n");
-        exit(ERROR);
-    }
-}
 
 /**
  * Reading the configuration file into the global variables.
@@ -179,6 +135,16 @@ void createDispatcherJob(pthread_t *dispatcherThread, Dispatcher *dispatcher) {
 }
 
 /**
+ * Launch the screen manager.
+ * @param screenManagerThread The tread of the screen manager.
+ * @param screenManager The screen manager struct.
+ */
+void createScreenManagerJob(pthread_t *screenManagerThread, ScreenManager *screenManager) {
+    // Run the thread with the screenManagerJob function so the screenManager will process the bounded queue.
+    pthread_create(screenManagerThread, NULL, screenManagerJob, (void *) screenManager);
+}
+
+/**
  * Launch the co-editors.
  * @param coEditorsThreads The co-editors threads array.
  * @param dispatcher The dispatcher which contains the co editors.
@@ -191,23 +157,23 @@ void createCoEditorsJob(pthread_t coEditorsThreads[], Dispatcher *dispatcher) {
 }
 
 
-
 /**
- *
- * @param producersThreads
- * @param numOfProducers
- * @param dispatcherThread
- * @param coEditorsThreads
+ * Wait for all threads to finish.
+ * @param producersThreads The producer's threads.
+ * @param numOfProducers The amount of producers.
+ * @param dispatcherThread The dispatcher thread.
+ * @param coEditorsThreads The co editors threads.
+ * @param screenManagerThread The screen manager threads.
  */
 void finishThreads(pthread_t producersThreads[],
                    int numOfProducers,
                    const pthread_t *dispatcherThread,
-                   pthread_t coEditorsThreads[]) {
+                   pthread_t coEditorsThreads[],
+                   const pthread_t *screenManagerThread) {
 
     // Wait for all producers threads to finish.
     for (int i = 0; i < numOfProducers; i++) {
         pthread_join(producersThreads[i], NULL);
-        printf("%d finished\n", i + 1);
     }
     // Wait for the dispatcher thread to finish.
     pthread_join(*dispatcherThread, NULL);
@@ -215,8 +181,9 @@ void finishThreads(pthread_t producersThreads[],
     // Wait for all co editors to finish.
     for (int i = 0; i < NUM_OF_ARTICLES_TYPE; i++) {
         pthread_join(coEditorsThreads[i], NULL);
-        printf("coeditor %d finished", i);
     }
+    // Wait for the screen manager thread to finish.
+    pthread_join(*screenManagerThread, NULL);
 }
 
 
@@ -227,7 +194,6 @@ void finishThreads(pthread_t producersThreads[],
  * @return
  */
 int main(int argc, char *argv[]) {
-
     // Validate the number of arguments.
     argCheck(argc);
     // Seed the random number generator with the current time
@@ -242,26 +208,31 @@ int main(int argc, char *argv[]) {
     readConf(argv[1], producers, &numOfProducers, producersArrayMaxSize, &coEditorQueueSize, &totalArticlesAmount);
     // Create the Bounded queues for the producers.
     BoundedQueue **boundedQueues;
-    // Initiate the bounded queue array.
+    // Allocate data for the bounded queue array.
     dataAllocation(numOfProducers, sizeof(BoundedQueue *), (void **) &boundedQueues);//todo: Release!
+    // Create the bounded queues.
     createBoundedQueues(producers, numOfProducers, boundedQueues);
-    Dispatcher *dispatcher = createNewDispatcher(boundedQueues, numOfProducers);
-
+    // Create the dispatcher.
+    Dispatcher *dispatcher = createNewDispatcherAndCoEditors(boundedQueues, numOfProducers);
+    // Create the screen manager.
+    ScreenManager *screenManager = createNewScreenManager(coEditorQueueSize, dispatcher);
     // Create an array of threads for the producers.
     pthread_t producersThreads[numOfProducers];
     // Create an array of threads for the co-editos.
     pthread_t coEditorsThreads[NUM_OF_ARTICLES_TYPE];
     // Create the thread of the dispatcher.
     pthread_t dispatcherThread;
-
+    // Create the thread of the screen manager.
+    pthread_t screenManagerThread;
+    //Launch the screen manager.
+    createScreenManagerJob(&screenManagerThread, screenManager);
     // Launch the producers.
     createProducersJob(producersThreads, producers, numOfProducers, boundedQueues);
     // Launch the dispatcher.
     createDispatcherJob(&dispatcherThread, dispatcher);
     // Launch the co-editors.
     createCoEditorsJob(coEditorsThreads, dispatcher);
-
     // Finish all threads.
-    finishThreads(producersThreads, numOfProducers, &dispatcherThread, coEditorsThreads);
+    finishThreads(producersThreads, numOfProducers, &dispatcherThread, coEditorsThreads, &screenManagerThread);
     return 0;
 }

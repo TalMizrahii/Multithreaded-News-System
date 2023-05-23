@@ -29,7 +29,7 @@ typedef struct {
 
 Dispatcher *createDispatcher(BoundedQueue **boundedQueues);
 
-Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues, int numOfProducers);
+Dispatcher *createNewDispatcherAndCoEditors(BoundedQueue **boundedQueues, int numOfProducers);
 
 void *dispatch(void *dispatchArg);
 
