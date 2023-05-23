@@ -10,6 +10,8 @@ typedef struct {
     int queueSize;
 } Producer;
 
+
+
 Producer *createProducer(int producerId, int numberOfArticles, int queueSize);
 
 #endif //OS_EX3_PRODUCER_H

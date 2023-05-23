@@ -57,14 +57,24 @@ Dispatcher *createNewDispatcher(BoundedQueue **boundedQueues,
  * @param article The article to sort.
  * @param dispatcher The dispatcher of the program.
  */
-void setArticleToCoEditor(Article *article, Dispatcher *dispatcher) {
+void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR) {
     switch (article->serial) {
         case SPORTS:
-            pushToBoundedQueue(article, dispatcher->sports->boundedQueue);
+//            pushToBoundedQueue(article, dispatcher->sports->boundedQueue);
+            break;
         case WEATHER:
-            pushToBoundedQueue(article, dispatcher->weather->boundedQueue);
+//            pushToBoundedQueue(article, dispatcher->weather->boundedQueue);
+            break;
         case NEWS:
-            pushToBoundedQueue(article, dispatcher->news->boundedQueue);
+//            pushToBoundedQueue(article, dispatcher->news->boundedQueue);
+            break;
+        case DONE:
+            for (int i = indexRR; i < dispatcher->numOfProducers; ++i) {
+                dispatcher->BoundedQueues[i] = dispatcher->BoundedQueues[i + 1];
+            }
+            dispatcher->numOfProducers = dispatcher->numOfProducers - 1;
+            // todo: Free producer!
+            break;
     }
 }
 
@@ -81,13 +91,16 @@ void *dispatch(void *dispatchArg) {
     // An article to transfer.
     Article *article;
     // As long as there are articles int the making.
-    while (dispatcher->totalArticlesAmount) {
-        printf("totalArticlesAmount:%d\n", dispatcher->totalArticlesAmount);
-        printf("waiting for: %d\n", indexRR);
+    while (1) {
+//        printf("totalArticlesAmount:%d\n", dispatcher->totalArticlesAmount);
+//        printf("waiting for: %d\n", indexRR);
         // Pop an article from the bounded queue.
         article = popFromBoundedQueue(dispatcher->BoundedQueues[indexRR]);
         // Sort the article to the correct co editor's queue.
-//        setArticleToCoEditor(article, dispatcher);
+        setArticleToCoEditor(article, dispatcher, indexRR);
+        if(!dispatcher->numOfProducers){
+            break;
+        }
         // Set the circle round-robin index to the next location.
         indexRR = (indexRR + 1) % dispatcher->numOfProducers;
         // Decrease the amount of articles to sort by 1.

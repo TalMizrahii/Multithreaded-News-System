@@ -69,8 +69,9 @@ void pushToBoundedQueue(Article *article, BoundedQueue *boundedQueue) {
     pthread_mutex_unlock(&boundedQueue->mutex);
     // Raise the full counter.
     sem_post(&boundedQueue->full);
-
 }
+
+
 
 /**
  * Pop an article from a bounded buffer. Making the pop safe for the consumer by using semaphores and mutexes.

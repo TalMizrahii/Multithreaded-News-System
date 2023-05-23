@@ -6,16 +6,6 @@
 #include <string.h>
 #include "ControlAndData.h"
 
-#define MAX_SIZE_OF_NEWS_STR 20
-#define NEXT_LOCATION 1
-
-typedef struct {
-    char articleStr[MAX_SIZE_OF_NEWS_STR];
-    int madeByProducerID;
-    int lastNumOfArticles;
-    int serial;
-} Article;
-
 
 typedef struct {
     Article **queueArticles;

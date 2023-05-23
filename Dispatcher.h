@@ -8,12 +8,15 @@
 #include "BoundedQueue.h"
 #include "ControlAndData.h"
 
+#define DONE (-1)
 #define SPORTS 0
 #define WEATHER 1
 #define NEWS 2
 
 typedef struct {
     BoundedQueue *boundedQueue;
+    Article **unboundedQueue;
+    int unboundedQueueSize;
     int articleSerial;
 } CoEditor;
 
