@@ -1,7 +1,6 @@
 #include "Dispatcher.h"
 
 
-
 /**
  * Creating a dispatcher. NOT assigning it co-editors.
  * @param boundedQueues The bounded queues that it will go over.
@@ -43,20 +42,26 @@ Dispatcher *createNewDispatcherAndCoEditors(BoundedQueue **boundedQueues, int nu
  * @param indexRR The index that the dispatcher is on in the producers queue.
  */
 void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR) {
+    // Check what queue of co editor the article belong.
     switch (article->serial) {
         case SPORTS:
+            // If it is a sports article, put it in it's co editor's queue.
             pushToUnBoundedQueue(article, dispatcher->sports->unBoundedQueue);
             break;
         case WEATHER:
+            // If it is a weather article, put it in it's co editor's queue.
             pushToUnBoundedQueue(article, dispatcher->weather->unBoundedQueue);
             break;
         case NEWS:
+            // If it is a news article, put it in it's co editor's queue.
             pushToUnBoundedQueue(article, dispatcher->news->unBoundedQueue);
             break;
         case DONE:
+            // If it is the done article, shrink the producers array to the left.
             for (int i = indexRR; i < dispatcher->numOfProducers; ++i) {
                 dispatcher->BoundedQueues[i] = dispatcher->BoundedQueues[i + 1];
             }
+            // Decrease the number of producers by 1.
             dispatcher->numOfProducers = dispatcher->numOfProducers - 1;
             // todo: Free producer!
             break;

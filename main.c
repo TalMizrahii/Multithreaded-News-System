@@ -12,10 +12,6 @@
 #include "CoEditor.h"
 #include "ScreenManager.h"
 
-
-
-
-
 /**
  * Check if the array needs to be resized.
  * @param currentArrayMaxSize The current array size (might not be full of elements).
@@ -34,7 +30,6 @@ void checkResizeProdArray(Producer **producers, int *currentArrayMaxSize, int nu
         }
     }
 }
-
 
 /**
  * Reading the configuration file into the global variables.
@@ -94,7 +89,6 @@ void createBoundedQueues(Producer **producers, int numOfProducers, BoundedQueue 
     }
 }
 
-
 /**
  * Creating
  * @param producers
@@ -103,7 +97,6 @@ void createBoundedQueues(Producer **producers, int numOfProducers, BoundedQueue 
  */
 void createProducersJob(pthread_t producersThreads[], Producer **producers, int numOfProducers,
                         BoundedQueue **boundedQueues) {
-
     // Create an array for the producers arguments.
     ProducerJobArgs *producerJobArgs[numOfProducers];
     // Go over all producers.
@@ -117,11 +110,6 @@ void createProducersJob(pthread_t producersThreads[], Producer **producers, int 
         // Create the thread and send it the job function.
         pthread_create(&producersThreads[i], NULL, producerJob, producerJobArgs[i]);
     }
-
-    // Release all producer args.
-//    for (int i = 0; i < numOfProducers; i++) {
-//        free(producerJobArgs[i]);
-//    }
 }
 
 /**
@@ -156,7 +144,6 @@ void createCoEditorsJob(pthread_t coEditorsThreads[], Dispatcher *dispatcher) {
     pthread_create(&coEditorsThreads[2], NULL, coEditorJob, (void *) dispatcher->news);
 }
 
-
 /**
  * Wait for all threads to finish.
  * @param producersThreads The producer's threads.
@@ -185,7 +172,6 @@ void finishThreads(pthread_t producersThreads[],
     // Wait for the screen manager thread to finish.
     pthread_join(*screenManagerThread, NULL);
 }
-
 
 /**
  *

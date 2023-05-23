@@ -21,7 +21,6 @@ Producer *createProducer(int producerId, int numberOfArticles, int queueSize) {
     return producer;
 }
 
-
 /**
  * Push all producer's article to his bounded queue.
  * @param producer The producer's struct.
@@ -51,7 +50,6 @@ void pushArticlesToBoundedQueue(Producer *producer, BoundedQueue *boundedQueue) 
         pushToBoundedQueue(article, boundedQueue);
     }
 }
-
 
 /**
  * The producer's job is to produce articles as the amount given in the configuration file,
