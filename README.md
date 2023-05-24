@@ -14,7 +14,7 @@ The purpose of this assignment is to gain experience with concurrent programming
 
 The assignment involves four types of active actors: Producers, Dispatcher, Co-Editors, and Screen Manager. The Producers generate strings representing news stories and send them to the Dispatcher. The Dispatcher sorts the stories based on their type and sends them to the corresponding Co-Editors. The Co-Editors edit the stories and pass them to the Screen Manager. Finally, the Screen Manager displays the stories on the screen. Each of them works in a different thread, allowing the system to work simultaneously.
 
-The system includes a bounded buffer, which is used as a queue between the Producers and the Dispatcher, as well as between the Co-Editors and the Screen Manager. The Dispatcher's queues are unbounded buffers.
+The system includes a bounded buffer, which is used as a queue between the Producers and the Dispatcher, as well as between the Co-Editors and the Screen Manager. This desgind needs to face the  [Producer–consumer problem](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem). The Dispatcher's queues are unbounded buffers.
   
   
 <img width="300" alt="4" src="https://github.com/TalMizrahii/Multithreaded-News-System/assets/103560553/95d8602d-24a0-41dc-8c8c-00e35bca733d">
@@ -104,6 +104,9 @@ The main.c file serves as the entry point of the program and coordinates the ini
 
 The system directory contains folders for each component, with corresponding .c and .h files that provide the implementation and necessary functions for each component.
 
+ I have thoroughly tested the Multi-Threaded News System for memory leaks and errors using [Valgrind](https://en.wikipedia.org/wiki/Valgrind), a powerful tool for detecting memory management issues. The extensive testing process involved running the system with different scenarios and input data to ensure its stability and reliability.
+  
+  
 Overall, the implementation follows a modular and concurrent design, allowing the system to efficiently process news stories and display them on the screen.
   
 ### Execution
