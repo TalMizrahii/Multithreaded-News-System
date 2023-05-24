@@ -111,6 +111,10 @@ void createProducersJob(pthread_t producersThreads[],
         // Create the thread and send it the job function.
         pthread_create(&producersThreads[i], NULL, producerJob, producerJobArgs[i]);
     }
+    // Free the producers array.
+    free(producers);
+    // Set it to null.
+    producers = NULL;
 }
 
 /**

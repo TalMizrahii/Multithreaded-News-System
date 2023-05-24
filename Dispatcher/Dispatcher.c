@@ -72,7 +72,7 @@ void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR)
             break;
         case DONE:
             // Free the ended queue.
-            free(dispatcher->BoundedQueues[indexRR]);
+            destroyBoundedQueue(dispatcher->BoundedQueues[indexRR]);
             // Destroy the done article.
             destroyArticle(article);
             // If it is the done article, shrink the producers array to the left.
