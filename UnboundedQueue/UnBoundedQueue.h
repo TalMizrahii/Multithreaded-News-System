@@ -22,7 +22,6 @@ UnBoundedQueue *createUnBoundedQueue();
 
 void destroyUnboundedQueue(UnBoundedQueue *unBoundedQueue);
 
-
 void pushToUnBoundedQueue(Article *article, UnBoundedQueue *unboundedQueue);
 
 Article *popFromUnBoundedQueue(UnBoundedQueue *unboundedQueue);

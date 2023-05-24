@@ -86,8 +86,8 @@ void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR)
 }
 
 /**
- *  The dispatcher's job. responsible to get an article from the producer's queue,
- *  and sort them to the co editors unbounded queues.
+ * The dispatcher's job. responsible to get an article from the producer's queue,
+ * and sort them to the co editors unbounded queues.
  * @param dispatchArg The dispatcher struct.
  * @return NULL.
  */
