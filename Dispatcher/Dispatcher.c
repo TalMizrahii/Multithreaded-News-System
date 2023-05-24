@@ -76,7 +76,7 @@ void setArticleToCoEditor(Article *article, Dispatcher *dispatcher, int indexRR)
             // Destroy the done article.
             destroyArticle(article);
             // If it is the done article, shrink the producers array to the left.
-            for (int i = indexRR; i < dispatcher->currentNumOfProducers; ++i) {
+            for (int i = indexRR; i < dispatcher->currentNumOfProducers - 1; ++i) {
                 dispatcher->BoundedQueues[i] = dispatcher->BoundedQueues[i + 1];
             }
             // Decrease the number of producers by 1.
