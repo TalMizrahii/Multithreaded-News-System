@@ -15,6 +15,9 @@ The purpose of this assignment is to gain experience with concurrent programming
 The assignment involves four types of active actors: Producers, Dispatcher, Co-Editors, and Screen Manager. The Producers generate strings representing news stories and send them to the Dispatcher. The Dispatcher sorts the stories based on their type and sends them to the corresponding Co-Editors. The Co-Editors edit the stories and pass them to the Screen Manager. Finally, the Screen Manager displays the stories on the screen. Each of them works in a different thread, allowing the system to work simultaneously.
 
 The system includes a bounded buffer, which is used as a queue between the Producers and the Dispatcher, as well as between the Co-Editors and the Screen Manager. The Dispatcher's queues are unbounded buffers.
+  
+  
+<img width="300" alt="4" src="https://github.com/TalMizrahii/Multithreaded-News-System/assets/103560553/95d8602d-24a0-41dc-8c8c-00e35bca733d">
 
 ## System Design
 
@@ -62,23 +65,74 @@ Co-Editor queue size = [size]
   I also added a test configuration file called conf.txt to this repository.
   
 ## Implementation
+  The implementation of the Multithreaded News System consists of several components that work together to process and display news stories. Each component performs specific tasks and operates in its own thread, allowing for concurrent execution. Here are the main components of the system:
   
-### Directory Structure
+  <img width="250" alt="5" src="https://github.com/TalMizrahii/Multithreaded-News-System/assets/103560553/c4e3c836-9dfe-4a2b-be59-0627cbf308a2">
 
-The system directory contains the following folders:
 
-- BoundedQueue: Contains the implementation files BoundedQueue.c and BoundedQueue.h for a bounded queue data structure.
-- CoEditor: Contains the implementation files CoEditor.c and CoEditor.h for the Co-Editor actor.
-- ControlAndData: Contains the implementation files ControlAndData.c and ControlAndData.h for managing control and data structures.
-- Dispatcher: Contains the implementation files Dispatcher.c and Dispatcher.h for the Dispatcher actor.
-- Producer: Contains the implementation files Producer.c and Producer.h for the Producer actor.
-- ScreenManager: Contains the implementation files ScreenManager.c and ScreenManager.h for the Screen Manager actor.
-- The main.c file is in the system's directory.
+#### Producers:
+
+Generate strings representing news stories.
+Send the generated stories to the Dispatcher for further processing.
+Operate in their own threads.
+
+#### Dispatcher:
+
+Receives news stories from Producers.
+Sorts the stories based on their type.
+Forwards each story to the corresponding Co-Editor for editing.
+Operates in its own thread.
+
   
+#### Co-Editors:
+
+Receive news stories from the Dispatcher.
+Edit the stories according to their assigned type.
+Pass the edited stories to the Screen Manager for display.
+Each Co-Editor operates in its own thread.
+
+#### Screen Manager:
+
+Receives edited news stories from the Co-Editors.
+Displays the stories on the screen.
+Operates in its own thread.
+The system utilizes multithreading to enable concurrent execution of these components. Each component is implemented as a separate module, with its own set of functions and data structures to fulfill its specific responsibilities.
+
+The main.c file serves as the entry point of the program and coordinates the initialization and execution of the system. It performs tasks such as reading the configuration file, creating the necessary threads for the components, and waiting for all threads to finish execution.
+
+The system directory contains folders for each component, with corresponding .c and .h files that provide the implementation and necessary functions for each component.
+
+Overall, the implementation follows a modular and concurrent design, allowing the system to efficiently process news stories and display them on the screen.
   
-## Getting Started
+### Execution
+To clone and run this program, you'll need [Git](https://git-scm.com) installed on your computer. From your command line:
 
-To run the program, follow these steps:
+// Clone this repository:
+```bash
+git clone https://github.com/TalMizrahii/Multithreaded-News-System
+```
+// Go into the repository:
+```bash
+cd Multithreaded-News-System
+```
+// Compile using Makefile:
+```bash
+ make
+```
+// An ex3.ou file will be created. You can run:
+```bash
+ make run
+```
 
-1. Clone this repository.
+// Or directly give the path to the configuration file.
+```bash
+ ./ex3.out conf.txt
+```
 
+// To clean the executabke file:
+```bash
+ make clean
+```
+
+## Author
+* [@Tal Mizrahi](https://github.com/TalMizrahii)
