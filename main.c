@@ -41,8 +41,7 @@ void readConf(char *confPath,
               Producer **producers,
               int *numOfProducers,
               int producersArrayMaxSize,
-              int *coEditorQueueSize,
-              int *totalArticlesAmount) {
+              int *coEditorQueueSize) {
 
     // Open the configuration file.
     FILE *ConfFile = openFile(confPath);
@@ -54,20 +53,17 @@ void readConf(char *confPath,
         if (fscanf(ConfFile, "%d", &numberOfArticles) <= ERROR)
             // If it was, break and set it to the coEditorQueueSize.
             break;
-        // Add the amount of articles to the total amount.
-        *totalArticlesAmount = *totalArticlesAmount + numberOfArticles;
         // Read the bound for the produce's queue size.
         fscanf(ConfFile, "%d", &queueSize);
         // Ignore any extra characters on the line.
         fscanf(ConfFile, "%*[^\n]");
         // Set the values to the producer.
-        producers[*numOfProducers] = createProducer(producerId, numberOfArticles, queueSize);
+        producers[*numOfProducers] = createProducer(*numOfProducers, numberOfArticles, queueSize);
         // increase the amount of producers.
         *numOfProducers = *numOfProducers + 1;
         // Check for the need to resize the producers array.
         checkResizeProdArray(producers, &producersArrayMaxSize, *numOfProducers);
     }
-    *totalArticlesAmount = *totalArticlesAmount + *numOfProducers;
     // If the loop ended, the producerId is actually the coEditorQueueSize.
     *coEditorQueueSize = producerId;
     // Close the configuration file.
@@ -191,13 +187,13 @@ int main(int argc, char *argv[]) {
     // Seed the random number generator with the current time
     srand(time(NULL));
     // Set parameters about the program.
-    int numOfProducers = 0, producersArrayMaxSize = 10, coEditorQueueSize = -1, totalArticlesAmount = 0;
+    int numOfProducers = 0, producersArrayMaxSize = 10, coEditorQueueSize = -1;
     // Declare a pointer to the producers array.
     Producer **producers;
     // Allocate data for the producers array.
     dataAllocation(producersArrayMaxSize, sizeof(Producer *), (void **) &producers);
     // Read the configuration file.
-    readConf(argv[1], producers, &numOfProducers, producersArrayMaxSize, &coEditorQueueSize, &totalArticlesAmount);
+    readConf(argv[1], producers, &numOfProducers, producersArrayMaxSize, &coEditorQueueSize);
     // Create the Bounded queues for the producers.
     BoundedQueue **boundedQueues;
     // Allocate data for the bounded queue array.
