@@ -63,7 +63,7 @@ void readConf(char *confPath,
             continue;
         }
         // Set the values to the producer.
-        producers[*numOfProducers] = createProducer(producerId - CORRECTION, numberOfArticles, queueSize);
+        producers[*numOfProducers] = createProducer(*numOfProducers, numberOfArticles, queueSize);
         // increase the amount of producers.
         *numOfProducers = *numOfProducers + 1;
         // Check for the need to resize the producers array.
