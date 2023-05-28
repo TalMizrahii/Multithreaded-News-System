@@ -57,8 +57,13 @@ void readConf(char *confPath,
         fscanf(ConfFile, "%d", &queueSize);
         // Ignore any extra characters on the line.
         fscanf(ConfFile, "%*[^\n]");
+        // Validate the producer's data form the configuration file.
+        if (!validateProducerData(numberOfArticles, queueSize)) {
+            // If a false statement returned, skip this producer.
+            continue;
+        }
         // Set the values to the producer.
-        producers[*numOfProducers] = createProducer(*numOfProducers, numberOfArticles, queueSize);
+        producers[*numOfProducers] = createProducer(producerId - CORRECTION, numberOfArticles, queueSize);
         // increase the amount of producers.
         *numOfProducers = *numOfProducers + 1;
         // Check for the need to resize the producers array.

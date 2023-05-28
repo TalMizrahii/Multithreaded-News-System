@@ -94,3 +94,16 @@ FILE *openFile(char *filePath) {
     }
     return file;
 }
+
+/**
+ * Checking if the producer received the correct value.
+ * @param numberOfArticles The number of articles that the producer received from the configuration file.
+ * @param queueSize The queue size that the producer received from the configuration file.
+ * @return 1 if the data is valid (both variables are greater than 0), 0 otherwise.
+ */
+int validateProducerData(int numberOfArticles,int queueSize){
+    if(queueSize <= 0 || numberOfArticles <= 0){
+        return FALSE;
+    }
+    return TRUE;
+}
